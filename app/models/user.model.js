@@ -34,7 +34,7 @@ module.exports = (sequelize, Sequelize) => {
     location: {
       type: Sequelize.STRING
     }
-  });
+  })
 
-  return User;
-};
+  return User
+}

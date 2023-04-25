@@ -17,7 +17,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 const db = require("./app/models")
-db.sequelize.sync({ force: true })
+db.sequelize.sync({ force: false , alter : true })
   .then(() => {
     console.log("Synced db.")
   })
@@ -27,7 +27,7 @@ db.sequelize.sync({ force: true })
 
 // Routes
 require("./app/routes/user.routes")(app)
-
+require("./app/routes/auth.routes")(app)
 
 const PORT = process.env.PORT || 8080
 app.listen(PORT, () => {

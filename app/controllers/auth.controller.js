@@ -2,6 +2,7 @@ const db = require("../models")
 const User = db.users
 
 const bcrypt = require("bcrypt")
+const jwt = require("jsonwebtoken");
 
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -23,14 +24,15 @@ const login = async (req, res) => {
       return res.status(401).send("Authentication failed");
     }
 
-    // const token = jwt.sign({ id: user.id }, process.env.secretKey, {
-    //   expiresIn: "1d",
-    // });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_KEY, {
+      expiresIn: "1d",
+    });
 
-    // res.cookie("jwt", token, { maxAge: 1 * 24 * 60 * 60, httpOnly: true });
-    // console.log("user", JSON.stringify(user, null, 2));
-    // console.log(token);
-    return res.status(201).send(user);
+    res.cookie("jwt", token, { maxAge: 1 * 24 * 60 * 60, httpOnly: true })
+    console.log("user", JSON.stringify(user, null, 2))
+    console.log(token)
+
+    return res.status(201).send({user, token})
   } catch (err) {
     console.log(err);
     return res.status(500).send("Internal server error");

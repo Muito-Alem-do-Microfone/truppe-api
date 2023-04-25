@@ -2,6 +2,7 @@ const express = require("express")
 const bodyParser = require("body-parser")
 const cors = require("cors")
 const dotenv = require('dotenv')
+const cookieParser = require('cookie-parser')
 
 const app = express()
 dotenv.config()
@@ -15,6 +16,8 @@ app.use(cors(corsOptions))
 app.use(express.json())
 
 app.use(express.urlencoded({ extended: true }))
+
+app.use(cookieParser())
 
 const db = require("./app/models")
 db.sequelize.sync({ force: false , alter : true })

@@ -1,8 +1,11 @@
+const dotenv = require('dotenv');
+dotenv.config();
+console.log(process.env.USER)
 module.exports = {
-  HOST: "madm-prod.c65orlzm5dog.sa-east-1.rds.amazonaws.com",
-  USER: "madm_admin",
-  PASSWORD: "sH918GglRnOX",
-  DB: "madm_prod",
+  HOST: process.env.DB_HOST,
+  USER: process.env.DB_USER,
+  PASSWORD: process.env.DB_PASSWORD,
+  DB: process.env.DB,
   dialect: "postgres",
   pool: {
     max: 5,

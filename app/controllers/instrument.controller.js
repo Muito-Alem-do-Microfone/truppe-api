@@ -1,6 +1,5 @@
 const db = require("../models")
 const User = db.instruments
-const Op = db.Sequelize.Op
 
 const findAll = (req, res) => {
   User.findAll()

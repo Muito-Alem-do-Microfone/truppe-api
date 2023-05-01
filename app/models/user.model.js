@@ -38,10 +38,15 @@ module.exports = (sequelize, Sequelize) => {
   User.associate = function(models) {
     User.belongsToMany(models.User, { through: models.Follow, foreignKey: 'follower_id', as: 'Follower' })
     User.belongsToMany(models.User, { through: models.Follow, foreignKey: 'followed_id', as: 'Followed' })
-    User.belongsToMany(models.Instruments, {
+    User.belongsToMany(models.Instrument, {
       through: models.UserInstrument,
       foreignKey: 'user_id',
       as: 'Plays'
+    })
+    User.belongsToMany(models.Group, {
+      through: models.isMember,
+      foreignKey: 'user_id',
+      as: 'Groups'
     })
   }
 

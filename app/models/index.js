@@ -20,7 +20,9 @@ const db = {}
 db.Sequelize = Sequelize
 db.sequelize = sequelize
 
-db.users = require("./user.model.js")(sequelize, Sequelize)
-db.follows = require("./follow.model.js")(sequelize, Sequelize)
+db.users           = require("./user.model.js")(sequelize, Sequelize)
+db.follows         = require("./follow.model.js")(sequelize, Sequelize)
+db.instruments     = require("./instrument.model.js")(sequelize, Sequelize)
+db.userInstruments = require("./userInstrument.model.js")(sequelize, Sequelize)
 
 module.exports = db

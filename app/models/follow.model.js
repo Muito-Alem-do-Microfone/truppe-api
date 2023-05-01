@@ -1,18 +1,26 @@
-module.exports = (sequelize, Sequelize) => {
+module.exports = (sequelize, Sequelize, models) => {
   const Follow = sequelize.define("Follow", {
-    follower_user_id: {
+    follower_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
+      reference: {
+        model: 'User',
+        key: 'id',
+      }
     },
-    followed_user_id: {
+    followed_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
+      reference: {
+        model: 'User',
+        key: 'id',
+      }
     }
   }, {})
   Follow.associate = function(models) {
-    Follow.belongsTo(models.User, {foreignKey: 'follower_user_id'})
-    Follow.belongsTo(models.User, {foreignKey: 'followed_user_id'})
+    Follow.belongsTo(models.User, {foreignKey: 'follower_id'})
+    Follow.belongsTo(models.User, {foreignKey: 'followed_id'})
   }
 
-  return Follow;
-};
+  return Follow
+}

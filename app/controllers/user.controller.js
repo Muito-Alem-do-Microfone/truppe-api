@@ -1,7 +1,10 @@
 const db = require("../models")
+const Op = db.Sequelize.Op
+
 const User = db.users
 const Follow = db.follows
-const Op = db.Sequelize.Op
+const Instrument = db.instruments
+const UserInstrument = db.userInstruments
 
 const bcrypt = require("bcrypt")
 const saltRounds = 10
@@ -135,7 +138,6 @@ const deleteUser = (req, res) => {
 
 const follow = async (req, res) => {
   const followed_id = req.params.id
-  console.log(followed_id, req.body.followerId)
 
   // check if body is empty
   if (!req.body.followerId || !followed_id) {
@@ -145,8 +147,12 @@ const follow = async (req, res) => {
     return
   }
 
-  // check if users exists
-  if (!User.findByPk(followed_id) || !User.findByPk(req.body.followerId)) {
+  const follower = await User.findByPk(req.body.followerId)
+  const followed = await User.findByPk(followed_id)
+
+  console.log(follower, followed)
+
+  if (!follower || !followed) {
     res.status(404).send({
       message: "One of the users does not exists"
     })
@@ -156,29 +162,72 @@ const follow = async (req, res) => {
   // Check if the follower is already following the following user
   const alreadyFollows = await Follow.findOne({
     where: {
-      follower_user_id: req.body.followerId,
-      followed_user_id: followed_id,
+      follower_id: req.body.followerId,
+      followed_id: followed_id,
     },
   })
 
   if (alreadyFollows) {
     // If the follow relationship already exists, delete it
     await alreadyFollows.destroy()
-    res.status(200).send({
-      message: "User unfollowed successfully"
-    })
+    res.status(200).send()
     return
   } else {
     // If the follow relationship does not exist, create it
     await Follow.create({
-      follower_user_id: req.body.followerId,
-      followed_user_id: followed_id,
+      follower_id: req.body.followerId,
+      followed_id: followed_id,
     })
-    res.status(200).send({
-      message: "User followed successfully"
+    res.status(200).send()
+    return
+  }
+}
+
+const changeInstrument = async (req, res) => {
+  const instrument_id = req.params.id
+
+  // check if body is empty
+  if (!req.body.user_id || !instrument_id) {
+    res.status(400).send({
+      message: "You need a user_id or instrument_id"
     })
     return
   }
+
+  const user = await User.findByPk(req.body.user_id)
+  const instrument = await Instrument.findByPk(instrument_id)
+
+  // check if users exists
+  if (!user || !instrument) {
+    res.status(404).send({
+      message: "User or instrument not found"
+    })
+    return
+  }
+
+  // Checks if user already has instrument 
+  const alreadyPlays = await UserInstrument.findOne({
+    where: {
+      user_id: req.body.user_id,
+      instrument_id: instrument_id,
+    },
+  })
+
+  if (alreadyPlays) {
+    // If the follow relationship already exists, delete it
+    await alreadyPlays.destroy()
+    res.status(200).send()
+    return
+  } else {
+    // If the follow relationship does not exist, create it
+    await UserInstrument.create({
+      user_id: req.body.user_id,
+      instrument_id: instrument_id,
+    })
+    res.status(200).send()
+    return
+  }
+
 }
 
 
@@ -188,5 +237,6 @@ module.exports = {
   findOne,
   update,
   deleteUser,
-  follow
+  follow,
+  changeInstrument
 };

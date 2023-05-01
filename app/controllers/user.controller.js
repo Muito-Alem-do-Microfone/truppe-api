@@ -1,5 +1,6 @@
 const db = require("../models")
 const User = db.users
+const Follow = db.follows
 const Op = db.Sequelize.Op
 
 const bcrypt = require("bcrypt")
@@ -132,11 +133,60 @@ const deleteUser = (req, res) => {
     })
 }
 
+const follow = async (req, res) => {
+  const followed_id = req.params.id
+  console.log(followed_id, req.body.followerId)
+
+  // check if body is empty
+  if (!req.body.followerId || !followed_id) {
+    res.status(400).send({
+      message: "You need two user IDs to change follower status"
+    })
+    return
+  }
+
+  // check if users exists
+  if (!User.findByPk(followed_id) || !User.findByPk(req.body.followerId)) {
+    res.status(404).send({
+      message: "One of the users does not exists"
+    })
+    return
+  }
+
+  // Check if the follower is already following the following user
+  const alreadyFollows = await Follow.findOne({
+    where: {
+      follower_user_id: req.body.followerId,
+      followed_user_id: followed_id,
+    },
+  })
+
+  if (alreadyFollows) {
+    // If the follow relationship already exists, delete it
+    await alreadyFollows.destroy()
+    res.status(200).send({
+      message: "User unfollowed successfully"
+    })
+    return
+  } else {
+    // If the follow relationship does not exist, create it
+    await Follow.create({
+      follower_user_id: req.body.followerId,
+      followed_user_id: followed_id,
+    })
+    res.status(200).send({
+      message: "User followed successfully"
+    })
+    return
+  }
+}
+
 
 module.exports = {
   create,
   findAll,
   findOne,
   update,
-  deleteUser
+  deleteUser,
+  follow
 };

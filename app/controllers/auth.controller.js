@@ -23,7 +23,7 @@ const login = async (req, res) => {
     if (!isSame) {
       return res.status(401).send("Authentication failed");
     }
-
+ 
     const token = jwt.sign({ id: user.id }, process.env.JWT_KEY, {
       expiresIn: "1d",
     });

@@ -8,6 +8,7 @@ module.exports = app => {
   router.get("/:id", users.findOne)
   router.put("/:id", users.update)
   router.delete("/:id", users.deleteUser)
+  router.post("/follow/:id", users.follow)
 
   app.use('/api/users', router)
 };

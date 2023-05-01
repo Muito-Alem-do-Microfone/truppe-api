@@ -34,7 +34,10 @@ module.exports = (sequelize, Sequelize) => {
     location: {
       type: Sequelize.STRING
     }
-  })
+  }, {})
+  User.associate = function(models) {
+    User.belongsToMany(models.Follow, {through: 'Follows'})
+  }
 
   return User
 }

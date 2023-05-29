@@ -3,11 +3,11 @@ dotenv.config()
 
 module.exports = {
   development: {
-    username: 'dev',
+    username: 'postgres',
     password: 'senha123',
-    database: 'madm_dev',
-    host: '172.19.8.141',
-    port: 5432,
+    database: 'madm',
+    host: 'localhost',
+    port: 8001,
     dialect: 'postgresql',
   },
   production: {

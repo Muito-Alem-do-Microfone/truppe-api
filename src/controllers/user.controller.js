@@ -231,6 +231,7 @@ const changeInstrument = async (req, res) => {
 }
 
 
+
 module.exports = {
   create,
   findAll,
@@ -238,5 +239,5 @@ module.exports = {
   update,
   deleteUser,
   follow,
-  changeInstrument
+  changeInstrument,
 };

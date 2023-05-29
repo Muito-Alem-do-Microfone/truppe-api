@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use(cookieParser())
 
-const db = require("./app/models")
+const db = require("./src/models")
 db.sequelize.sync({ force: false , alter : true })
   .then(() => {
     console.log("Synced db.")
@@ -28,10 +28,10 @@ db.sequelize.sync({ force: false , alter : true })
   })
 
 // Routes
-require("./app/routes/user.routes")(app)
-require("./app/routes/auth.routes")(app)
-require("./app/routes/instrument.routes")(app)
-require("./app/routes/group.routes")(app)
+require("./src/routes/user.routes")(app)
+require("./src/routes/auth.routes")(app)
+require("./src/routes/instrument.routes")(app)
+require("./src/routes/group.routes")(app)
 
 const PORT = process.env.PORT || 8080
 app.listen(PORT, () => {

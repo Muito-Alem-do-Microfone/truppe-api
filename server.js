@@ -32,6 +32,7 @@ require("./src/routes/user.routes")(app)
 require("./src/routes/auth.routes")(app)
 require("./src/routes/instrument.routes")(app)
 require("./src/routes/group.routes")(app)
+require("./src/routes/announcement.routes")(app)
 
 const PORT = process.env.PORT || 8080
 app.listen(PORT, () => {

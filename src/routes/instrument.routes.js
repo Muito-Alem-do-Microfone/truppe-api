@@ -1,5 +1,5 @@
 const instruments = require("../controllers/instrument.controller.js")
-const { validateJWT } = require('../middlewares/user.middleware.js')
+const { validateJWT } = require('../middlewares/auth.middleware.js')
 
 var router = require("express").Router()
 

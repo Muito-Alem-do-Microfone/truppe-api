@@ -1,13 +1,31 @@
 import express, { json, urlencoded } from "express";
 import cors from "cors";
-import { config } from "dotenv";
 import cookieParser from "cookie-parser";
-import { PrismaClient } from "@prisma/client"; // Import Prisma Client
+import { PrismaClient } from "@prisma/client";
 import announcementRoutes from "./src/routes/announcement.routes.js";
 import instrumentsRoutes from "./src/routes/instruments.routes.js";
+import swaggerJSDoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
 
 const app = express();
-config();
+
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "MADM API Documentation",
+      version: "1.0.0",
+    },
+    servers: [
+      {
+        url: "http://localhost:8080",
+      },
+    ],
+  },
+  apis: ["./src/routes/*.routes.js"],
+};
+
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
 const corsOptions = {
   origin: "*",
@@ -17,6 +35,7 @@ app.use(cors(corsOptions));
 app.use(json());
 app.use(urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Initialize Prisma Client
 const prisma = new PrismaClient();

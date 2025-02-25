@@ -4,6 +4,7 @@
 
 - **Announcement Management**: Users can create, update, and delete announcements.
 - **Genres and Instruments**: Associated genres and instruments with each announcement.
+- **Swagger Documentation**: Interactive API documentation for testing and exploring the API endpoints.
 
 ## Technologies
 
@@ -11,6 +12,7 @@
 - **Prisma**: ORM to interact with the PostgreSQL database.
 - **Express.js**: Web framework for building APIs.
 - **PostgreSQL**: Relational database used for storing application data.
+- **Swagger**: Open-source tool used to generate interactive API documentation.
 
 ## Installation
 
@@ -68,9 +70,19 @@ Ensure you have the following installed:
 
    The server will start at `http://localhost:8080`.
 
-## API Endpoints
+## API Documentation
 
-### `POST api/announcements`
+### Access Swagger UI
+
+Once the server is running, you can access the interactive API documentation at the following URL:
+
+- Swagger UI: `http://localhost:8080/api-docs`
+
+Here, you can view and interact with all available API endpoints.
+
+### API Endpoints
+
+`POST api/announcements`
 
 Create a new announcement.
 

@@ -1,40 +1,43 @@
-const express = require("express")
-const cors = require("cors")
-const dotenv = require('dotenv')
-const cookieParser = require('cookie-parser')
+import express, { json, urlencoded } from "express";
+import cors from "cors";
+import { config } from "dotenv";
+import cookieParser from "cookie-parser";
+import { PrismaClient } from "@prisma/client"; // Import Prisma Client
+import announcementRoutes from "./src/routes/announcement.routes.js";
+import instrumentsRoutes from "./src/routes/instruments.routes.js";
 
-const app = express()
-dotenv.config()
+const app = express();
+config();
 
-var corsOptions = {
-  origin: "http://localhost:8081"
-}
+const corsOptions = {
+  origin: "*",
+};
 
-app.use(cors(corsOptions))
+app.use(cors(corsOptions));
+app.use(json());
+app.use(urlencoded({ extended: true }));
+app.use(cookieParser());
 
-app.use(express.json())
+// Initialize Prisma Client
+const prisma = new PrismaClient();
 
-app.use(express.urlencoded({ extended: true }))
+// Use routes
+announcementRoutes(app);
+instrumentsRoutes(app);
 
-app.use(cookieParser())
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send("Something went wrong!");
+});
 
-const db = require("./src/models")
-db.sequelize.sync({ force: false , alter : true })
-  .then(() => {
-    console.log("Synced db.")
-  })
-  .catch((err) => {
-    console.log("Failed to sync db: " + err.message)
-  })
-
-// Routes
-require("./src/routes/user.routes")(app)
-require("./src/routes/auth.routes")(app)
-require("./src/routes/instrument.routes")(app)
-require("./src/routes/group.routes")(app)
-require("./src/routes/announcement.routes")(app)
-
-const PORT = process.env.PORT || 8080
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}.`)
+  console.log(`Server is running on port ${PORT}.`);
+});
+
+// Optionally handle cleanup on server termination
+process.on("SIGINT", async () => {
+  await prisma.$disconnect();
+  console.log("Prisma Client disconnected.");
+  process.exit(0);
 });

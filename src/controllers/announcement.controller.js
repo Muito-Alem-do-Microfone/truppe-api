@@ -1,154 +1,165 @@
-const db = require("../models")
-const { calculateLocationRange } = require("../utils/utils")
-const Op = db.Sequelize.Op
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
-const User = db.users
-const Announcement = db.announcements
+export const createAnnouncement = async (req, res) => {
+  const {
+    title,
+    name,
+    number,
+    email,
+    type,
+    genreIds,
+    state,
+    city,
+    description,
+    instrumentIds,
+  } = req.body;
 
-
-const create = async (req, res) => {
-  if (!req.body.title || !req.body.genre || !req.body.state || !req.body.city, !req.body.ownerType || !req.body.ownerId || !req.body.latitude || !req.body.longitude) {
-    res.status(400).send({
-      message: "One or more required fields are missing: Title, Genre, State, City, Type, OwnerId, Latitude, Longitude"
-    })
-    return
+  if (
+    !title ||
+    !name ||
+    !number ||
+    !email ||
+    !type ||
+    !genreIds ||
+    !state ||
+    !city ||
+    !description ||
+    !instrumentIds
+  ) {
+    return res.status(400).send({
+      message:
+        "One or more required fields are missing: Title, Name, Number, Email, Type, GenreIds, State, City, Description, InstrumentIds",
+    });
   }
 
-  const announcement = {
-    title: req.body.title,
-    genre: req.body.genre,
-    state: req.body.state,
-    city: req.body.city,
-    description: req.body.description,
-    owner_type: req.body.ownerType,
-    owner_id: req.body.ownerId,
-    latitude: req.body.latitude,
-    longitude: req.body.longitude
-  }
+  try {
+    const announcement = await prisma.announcement.create({
+      data: {
+        title,
+        name,
+        number,
+        email,
+        type,
+        state,
+        city,
+        description,
+        genres: {
+          connect: genreIds.map((genreId) => ({ id: genreId })),
+        },
+        instruments: {
+          connect: instrumentIds.map((instrumentId) => ({ id: instrumentId })),
+        },
+      },
+    });
 
-  Announcement.create(announcement)
-    .then(data => {
-      res.send(data);
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "We had some errors while creating this announcement."
-      })
-    })
-}
-
-const deleteAnnouncement = async (req, res) => {
-  const id = req.params.id
-  Announcement.destroy({
-    where: {
-      id: id
+    return res.status(201).json({
+      status: "success",
+      data: announcement,
+    });
+  } catch (err) {
+    if (err instanceof PrismaClientKnownRequestError) {
+      if (err.code === "P2002") {
+        return res.status(409).json({
+          status: "error",
+          message: "Duplicate entry found for unique field.",
+        });
+      }
     }
-  })
-  .then(data => {
-      res.status(200).send({
-        message: "Announcement deleted successfully."
-      })
-    })
-  .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "We had some errors while deleting this announcement."
-      })
-    })
-}
 
-const updateAnnouncement = async (req, res) => {
-  const id = req.params.id
-
-  if (!req.body.title ||!req.body.genre ||!req.body.state ||!req.body.city,!req.body.ownerType ||!req.body.ownerId ||!req.body.latitude ||!req.body.longitude) {
-    res.status(400).send({
-      message: "One or more required fields are missing: Title, Genre, State, City, Type, OwnerId, latitude, longitude"
-    })
-    return
+    console.error(err);
+    return res.status(500).json({
+      status: "error",
+      message:
+        "An unexpected error occurred while creating the announcement. Please try again later.",
+    });
   }
+};
 
-  const announcement = {
-    title: req.body.title,
-    genre: req.body.genre,
-    state: req.body.state,
-    city: req.body.city,
-    description: req.body.description,
-    owner_type: req.body.ownerType,
-    owner_id: req.body.ownerId,
-    latitude: req.body.latitude,
-    longitude: req.body.longitude
-  }
+export const deleteAnnouncement = async (req, res) => {
+  const id = req.params.id;
 
-  Announcement.update(announcement, {
-    where: {
-      id: id
-    }
-  })
-  .then(data => {
-    res.send({
-      message: "Announcement updated successfully."
-    })
-  })
-.catch(err => {
+  try {
+    const announcement = await prisma.announcement.delete({
+      where: { id: parseInt(id) },
+    });
+    res.status(200).send({ message: "Announcement deleted successfully." });
+  } catch (err) {
     res.status(500).send({
       message:
-        err.message || "We had some errors while deleting this announcement."
-    })
-  })
-}
-
-const searchWithinRange = async (req, res) => {
-  let {latitude, longitude, range, ...queryParams} = req.query
-  latitude = parseFloat(latitude)
-  longitude = parseFloat(longitude)
-  range = parseFloat(range)
-
-  // Validate if latitude, longitude and range are valid
-  if (!latitude || !longitude || !range) {
-    return res.status(400).json({ message: 'Missing required parameters' });
+        err.message || "We had some errors while deleting this announcement.",
+    });
   }
-  
+};
+
+export const updateAnnouncement = async (req, res) => {
+  const id = req.params.id;
   const {
-    minLatitude,
-    maxLatitude,
-    minLongitude,
-    maxLongitude
-  } = calculateLocationRange(latitude, longitude, range)
+    title,
+    name,
+    number,
+    email,
+    type,
+    genreIds,
+    state,
+    city,
+    description,
+    instrumentIds,
+  } = req.body;
 
-  await Announcement.findAll({
-    where: {
-      latitude: {
-        [Op.between]: [minLatitude, maxLatitude]
+  if (
+    !title ||
+    !name ||
+    !number ||
+    !email ||
+    !type ||
+    !genreIds ||
+    !state ||
+    !city ||
+    !description ||
+    !instrumentIds
+  ) {
+    return res.status(400).send({
+      message:
+        "One or more required fields are missing: Title, Name, Number, Email, Type, GenreIds, State, City, Description, InstrumentIds",
+    });
+  }
+
+  try {
+    const updatedAnnouncement = await prisma.announcement.update({
+      where: { id: parseInt(id) },
+      data: {
+        title,
+        genre,
+        state,
+        city,
+        description,
+        owner_type: ownerType,
+        owner_id: ownerId,
+        latitude,
+        longitude,
       },
-      longitude: {
-        [Op.between]: [minLongitude, maxLongitude]
-      },
-      ...Object.fromEntries(
-        Object.entries(queryParams).map(([key, value]) => [
-          key,
-          {
-            [Op.iLike]: `%${value}%`
-          }
-        ])
-      )
-    }
-  })
-    .then(data => {
-      res.json(data)
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "We had some errors while searching for announcements."
-      })
-    })
-}
+    });
+    res.send({
+      message: "Announcement updated successfully.",
+      data: updatedAnnouncement,
+    });
+  } catch (err) {
+    res.status(500).send({
+      message:
+        err.message || "We had some errors while updating this announcement.",
+    });
+  }
+};
 
-
-module.exports = {
-  create,
-  deleteAnnouncement,
-  updateAnnouncement,
-  searchWithinRange
+export const getAnnouncements = async (req, res) => {
+  try {
+    const announcements = await prisma.announcement.findMany();
+    res.send(announcements);
+  } catch (err) {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving announcements.",
+    });
+  }
 };

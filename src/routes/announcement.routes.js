@@ -1,14 +1,18 @@
-const announcements = require("../controllers/announcement.controller.js")
-const { validateJWT } = require('../middlewares/auth.middleware.js')
+import express from "express";
+import {
+  deleteAnnouncement,
+  updateAnnouncement,
+  getAnnouncements,
+  createAnnouncement,
+} from "../controllers/announcement.controller.js";
 
-var router = require("express").Router()
+const router = express.Router();
 
-module.exports = app => {
+export default (app) => {
+  router.post("/", createAnnouncement);
+  router.delete("/:id", deleteAnnouncement);
+  router.put("/:id", updateAnnouncement);
+  router.get("/", getAnnouncements);
 
-  router.post("/create", validateJWT, announcements.create)
-  router.delete("/:id", validateJWT, announcements.deleteAnnouncement)
-  router.put("/:id", validateJWT, announcements.updateAnnouncement)
-  router.get("/search", validateJWT, announcements.searchWithinRange)
-
-  app.use('/api/announcements', router)
+  app.use("/api/announcements", router);
 };

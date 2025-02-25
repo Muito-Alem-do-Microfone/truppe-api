@@ -1,10 +1,12 @@
 import express from "express";
-import {
+import { announcementController } from "../controllers/index.js";
+
+const {
+  createAnnouncement,
   deleteAnnouncement,
   updateAnnouncement,
   getAnnouncements,
-  createAnnouncement,
-} from "../controllers/announcement.controller.js";
+} = announcementController;
 
 const router = express.Router();
 
@@ -76,5 +78,5 @@ export default (app) => {
   router.put("/:id", updateAnnouncement);
   router.get("/", getAnnouncements);
 
-  app.use("/api/announcements", router);
+  app.use("/api/announcement", router);
 };

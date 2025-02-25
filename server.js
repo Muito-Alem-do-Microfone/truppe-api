@@ -2,10 +2,14 @@ import express, { json, urlencoded } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { PrismaClient } from "@prisma/client";
-import announcementRoutes from "./src/routes/announcement.routes.js";
-import instrumentsRoutes from "./src/routes/instruments.routes.js";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
+
+import {
+  announcementRoutes,
+  genreRoutes,
+  instrumentRoutes,
+} from "./src/routes/index.js";
 
 const app = express();
 
@@ -42,7 +46,8 @@ const prisma = new PrismaClient();
 
 // Use routes
 announcementRoutes(app);
-instrumentsRoutes(app);
+instrumentRoutes(app);
+genreRoutes(app);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

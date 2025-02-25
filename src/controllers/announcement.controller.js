@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-export const createAnnouncement = async (req, res) => {
+const createAnnouncement = async (req, res) => {
   const {
     title,
     name,
@@ -76,7 +76,7 @@ export const createAnnouncement = async (req, res) => {
   }
 };
 
-export const deleteAnnouncement = async (req, res) => {
+const deleteAnnouncement = async (req, res) => {
   const id = req.params.id;
 
   try {
@@ -92,7 +92,7 @@ export const deleteAnnouncement = async (req, res) => {
   }
 };
 
-export const updateAnnouncement = async (req, res) => {
+const updateAnnouncement = async (req, res) => {
   const id = req.params.id;
   const {
     title,
@@ -152,14 +152,21 @@ export const updateAnnouncement = async (req, res) => {
   }
 };
 
-export const getAnnouncements = async (req, res) => {
+const getAnnouncements = async (req, res) => {
   try {
-    const announcements = await prisma.announcement.findMany();
-    res.send(announcements);
+    const announcementsList = await prisma.announcement.findMany();
+    res.send(announcementsList);
   } catch (err) {
     res.status(500).send({
       message:
         err.message || "Some error occurred while retrieving announcements.",
     });
   }
+};
+
+export const announcementController = {
+  createAnnouncement,
+  deleteAnnouncement,
+  updateAnnouncement,
+  getAnnouncements,
 };

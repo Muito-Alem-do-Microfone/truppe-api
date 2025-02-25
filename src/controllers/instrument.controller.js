@@ -12,3 +12,7 @@ export const getInstruments = async (req, res) => {
     });
   }
 };
+
+export const instrumentController = {
+  getInstruments,
+};

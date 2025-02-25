@@ -1,10 +1,11 @@
 import express from "express";
-import { getInstruments } from "../controllers/instruments.controller.js";
+import { instrumentController } from "../controllers/index.js";
 
+const { getInstruments } = instrumentController;
 const router = express.Router();
 
 export default (app) => {
   router.get("/", getInstruments);
 
-  app.use("/api/instruments", router);
+  app.use("/api/instrument", router);
 };

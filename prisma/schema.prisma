@@ -11,6 +11,8 @@ model Announcement {
   id          Int          @id @default(autoincrement())
   title       String
   name        String
+  age         Int
+  about       String
   number      String
   email       String
   type        String

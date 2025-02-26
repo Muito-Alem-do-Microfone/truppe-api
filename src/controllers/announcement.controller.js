@@ -7,6 +7,8 @@ const createAnnouncement = async (req, res) => {
     name,
     number,
     email,
+    age,
+    about,
     type,
     genreIds,
     state,
@@ -21,6 +23,8 @@ const createAnnouncement = async (req, res) => {
     !name ||
     !number ||
     !email ||
+    !age ||
+    !about ||
     !type ||
     !genreIds ||
     !state ||
@@ -44,6 +48,8 @@ const createAnnouncement = async (req, res) => {
         state,
         city,
         description,
+        age,
+        about,
         genres: {
           connect: genreIds.map((genreId) => ({ id: genreId })),
         },
@@ -108,6 +114,8 @@ const updateAnnouncement = async (req, res) => {
     name,
     number,
     email,
+    age,
+    about,
     type,
     genreIds,
     state,
@@ -122,6 +130,8 @@ const updateAnnouncement = async (req, res) => {
     !name ||
     !number ||
     !email ||
+    !age ||
+    !about ||
     !type ||
     !genreIds ||
     !state ||
@@ -152,6 +162,8 @@ const updateAnnouncement = async (req, res) => {
         number,
         email,
         type,
+        age,
+        about,
         state,
         city,
         description,
@@ -196,6 +208,11 @@ const getAnnouncements = async (req, res) => {
         genres: true,
         instruments: true,
       },
+    });
+    announcementsList.forEach((announcement) => {
+      delete announcement.about;
+      delete announcement.email;
+      delete announcement.number;
     });
     res.send(announcementsList);
   } catch (err) {

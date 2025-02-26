@@ -7,6 +7,7 @@ import {
   announcementRoutes,
   genreRoutes,
   instrumentRoutes,
+  tagRoutes,
 } from "./src/routes/index.js";
 
 const app = express();
@@ -27,6 +28,7 @@ const prisma = new PrismaClient();
 announcementRoutes(app);
 instrumentRoutes(app);
 genreRoutes(app);
+tagRoutes(app);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

@@ -24,6 +24,7 @@ model Announcement {
   socialLinks SocialLink[]
   genres      Genre[]      @relation("AnnouncementGenres")
   instruments Instrument[] @relation("AnnouncementInstruments")
+  tags        Tags[]       @relation("AnnouncementTags")
 }
 
 model Instrument {
@@ -52,4 +53,10 @@ model SocialLink {
   announcementId Int
   announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
   socialMedia    SocialMedia  @relation(fields: [socialMediaId], references: [id], onDelete: Cascade)
+}
+
+model Tags {
+  id    Int @id @default(autoincrement())
+  name  String @unique
+  announcement  Announcement[] @relation("AnnouncementTags")
 }

@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -23,30 +17,30 @@ model Announcement {
   state       String
   city        String
   description String
-  instruments Instrument[] @relation("AnnouncementInstruments")
-  genres      Genre[]      @relation("AnnouncementGenres")
-  socialLinks SocialLink[]
   createdAt   DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  updatedAt   DateTime     @updatedAt
+  socialLinks SocialLink[]
+  genres      Genre[]      @relation("AnnouncementGenres")
+  instruments Instrument[] @relation("AnnouncementInstruments")
 }
 
 model Instrument {
   id            Int            @id @default(autoincrement())
-  name          String
+  name          String         @unique
   type          String
   announcements Announcement[] @relation("AnnouncementInstruments")
 }
 
 model Genre {
   id            Int            @id @default(autoincrement())
-  name          String
+  name          String         @unique
   announcements Announcement[] @relation("AnnouncementGenres")
 }
 
 model SocialMedia {
   id         Int          @id @default(autoincrement())
   name       String       @unique
-  SocialLinks SocialLink[]
+  SocialLink SocialLink[]
 }
 
 model SocialLink {
@@ -54,6 +48,6 @@ model SocialLink {
   url            String
   socialMediaId  Int
   announcementId Int
-  socialMedia    SocialMedia  @relation(fields: [socialMediaId], references: [id], onDelete: Cascade)
   announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  socialMedia    SocialMedia  @relation(fields: [socialMediaId], references: [id], onDelete: Cascade)
 }

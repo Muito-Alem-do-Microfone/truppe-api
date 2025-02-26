@@ -81,7 +81,15 @@ const deleteAnnouncement = async (req, res) => {
   const id = req.params.id;
 
   try {
-    const announcement = await prisma.announcement.delete({
+    const existingAnnouncement = await prisma.announcement.findUnique({
+      where: { id },
+    });
+
+    if (!existingAnnouncement) {
+      return res.status(404).json({ message: "Announcement not found" });
+    }
+
+    await prisma.announcement.delete({
       where: { id: parseInt(id) },
     });
     res.status(200).send({ message: "Announcement deleted successfully." });

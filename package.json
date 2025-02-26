@@ -9,6 +9,7 @@
     "start": "node server.js",
     "prisma:seed:instruments": "js-node prisma/instrumentsSeed.js",
     "prisma:seed:genres": "node prisma/genresSeed.js",
+    "prisma:seed:socialMedia": "node prisma/socialMediaSeed.js",
     "prisma:seed": "node prisma/seed.js"
   },
   "author": "",

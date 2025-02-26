@@ -1,6 +1,5 @@
 import express from "express";
 import { announcementController } from "../controllers/index.js";
-import "./docs/announcementSwagger.js";
 
 const {
   createAnnouncement,

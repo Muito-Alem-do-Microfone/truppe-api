@@ -78,7 +78,7 @@ const createAnnouncement = async (req, res) => {
 };
 
 const deleteAnnouncement = async (req, res) => {
-  const id = req.params.id;
+  const id = parseInt(req.params.id); // Convert the ID to an integer
 
   try {
     const existingAnnouncement = await prisma.announcement.findUnique({

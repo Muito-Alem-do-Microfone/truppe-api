@@ -13,6 +13,7 @@ const createAnnouncement = async (req, res) => {
     city,
     description,
     instrumentIds,
+    socialLinks,
   } = req.body;
 
   if (
@@ -28,8 +29,7 @@ const createAnnouncement = async (req, res) => {
     !instrumentIds
   ) {
     return res.status(400).send({
-      message:
-        "One or more required fields are missing: Title, Name, Number, Email, Type, GenreIds, State, City, Description, InstrumentIds",
+      message: "One or more required fields are missing",
     });
   }
 
@@ -50,6 +50,17 @@ const createAnnouncement = async (req, res) => {
         instruments: {
           connect: instrumentIds.map((instrumentId) => ({ id: instrumentId })),
         },
+        socialLinks: {
+          create: socialLinks.map(({ socialMediaId, url }) => ({
+            url,
+            socialMedia: { connect: { id: socialMediaId } },
+          })),
+        },
+      },
+      include: {
+        genres: true,
+        instruments: true,
+        socialLinks: { include: { socialMedia: true } },
       },
     });
 
@@ -58,20 +69,10 @@ const createAnnouncement = async (req, res) => {
       data: announcement,
     });
   } catch (err) {
-    if (err instanceof PrismaClientKnownRequestError) {
-      if (err.code === "P2002") {
-        return res.status(409).json({
-          status: "error",
-          message: "Duplicate entry found for unique field.",
-        });
-      }
-    }
-
     console.error(err);
     return res.status(500).json({
       status: "error",
-      message:
-        "An unexpected error occurred while creating the announcement. Please try again later.",
+      message: "An error occurred while creating the announcement.",
     });
   }
 };
@@ -93,7 +94,7 @@ const deleteAnnouncement = async (req, res) => {
 };
 
 const updateAnnouncement = async (req, res) => {
-  const id = req.params.id;
+  const id = parseInt(req.params.id);
   const {
     title,
     name,
@@ -105,6 +106,7 @@ const updateAnnouncement = async (req, res) => {
     city,
     description,
     instrumentIds,
+    socialLinks,
   } = req.body;
 
   if (
@@ -126,28 +128,55 @@ const updateAnnouncement = async (req, res) => {
   }
 
   try {
+    const existingAnnouncement = await prisma.announcement.findUnique({
+      where: { id },
+    });
+
+    if (!existingAnnouncement) {
+      return res.status(404).json({ message: "Announcement not found" });
+    }
+
     const updatedAnnouncement = await prisma.announcement.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data: {
         title,
-        genre,
+        name,
+        number,
+        email,
+        type,
         state,
         city,
         description,
-        owner_type: ownerType,
-        owner_id: ownerId,
-        latitude,
-        longitude,
+        genres: {
+          set: genreIds.map((genreId) => ({ id: genreId })),
+        },
+        instruments: {
+          set: instrumentIds.map((instrumentId) => ({ id: instrumentId })),
+        },
+        socialLinks: {
+          deleteMany: {},
+          create: socialLinks.map(({ socialMediaId, url }) => ({
+            url,
+            socialMedia: { connect: { id: socialMediaId } },
+          })),
+        },
+      },
+      include: {
+        genres: true,
+        instruments: true,
+        socialLinks: { include: { socialMedia: true } },
       },
     });
-    res.send({
-      message: "Announcement updated successfully.",
+
+    return res.status(200).json({
+      status: "success",
       data: updatedAnnouncement,
     });
   } catch (err) {
-    res.status(500).send({
-      message:
-        err.message || "We had some errors while updating this announcement.",
+    console.error(err);
+    return res.status(500).json({
+      status: "error",
+      message: "An error occurred while updating the announcement.",
     });
   }
 };

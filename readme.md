@@ -70,9 +70,9 @@ Ensure you have the following installed:
 
 ## API Documentation
 
-### API Endpoints
+### Announcements Endpoints
 
-`POST api/announcements`
+`POST api/announcement`
 
 Create a new announcement.
 
@@ -80,16 +80,23 @@ Create a new announcement.
 
 ```json
 {
-  "title": "Guitarrista de Ska procura banda profissional",
-  "name": "Matheus Alexandre",
+  "title": "Looking for a Drummer",
+  "name": "John Doe",
   "number": "123456789",
   "email": "john@example.com",
-  "type": "musician",
-  "genreIds": [1, 2, 3],
-  "state": "SP",
-  "city": "São Paulo",
-  "description": "Sou guitarrista há 10 anos, gosto muito de tocar Ska, hardcore e coisas parecidas. Procuro algo sério.",
-  "instrumentIds": [4, 5, 6]
+  "age": 25,
+  "about": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam justo nisi, tristique nec elit ac, ornare mattis lectus. Suspendisse potenti. Sed sit amet neque at eros rutrum molestie pretium quis dui. Phasellus pellentesque pellentesque luctus.",
+  "type": "Band",
+  "genreIds": [1, 2],
+  "state": "California",
+  "city": "Los Angeles",
+  "description": "We need a drummer for our rock band!",
+  "instrumentIds": [3],
+  "socialLinks": [
+    { "socialMediaId": 1, "url": "myband" },
+    { "socialMediaId": 2, "url": "myband" }
+  ],
+  "tagIds": [1, 2, 3]
 }
 ```
 
@@ -98,23 +105,78 @@ Create a new announcement.
 ```json
 {
   "status": "success",
-    {
-      "id": 1,
-      "title": "Guitarrista de Ska procura banda profissional",
-      "name": "Matheus Alexandre",
-      "number": "123456789",
-      "email": "john@example.com",
-      "type": "musician",
-      "state": "SP",
-      "city": "São Paulo",
-      "description": "Sou guitarrista há 10 anos, gosto muito de tocar Ska, hardcore e coisas parecidas. Procuro algo sério.",
-      "createdAt": "2025-02-25T11:06:49.909Z",
-      "updateAt": "2025-02-25T11:06:49.909Z"
-    }
+  "data": {
+    "id": 3,
+    "title": "Looking for a Drummer",
+    "name": "John Doe",
+    "age": 25,
+    "about": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam justo nisi, tristique nec elit ac, ornare mattis lectus. Suspendisse potenti. Sed sit amet neque at eros rutrum molestie pretium quis dui. Phasellus pellentesque pellentesque luctus.",
+    "number": "123456789",
+    "email": "john@example.com",
+    "type": "Band",
+    "state": "California",
+    "city": "Los Angeles",
+    "description": "We need a drummer for our rock band!",
+    "createdAt": "2025-02-26T01:57:36.849Z",
+    "updatedAt": "2025-02-26T01:57:36.849Z",
+    "genres": [
+      {
+        "id": 1,
+        "name": "Rock"
+      },
+      {
+        "id": 2,
+        "name": "Classic Rock"
+      }
+    ],
+    "instruments": [
+      {
+        "id": 3,
+        "name": "Agogô",
+        "type": "Percussão"
+      }
+    ],
+    "socialLinks": [
+      {
+        "id": 5,
+        "url": "myband",
+        "socialMediaId": 2,
+        "announcementId": 3,
+        "socialMedia": {
+          "id": 2,
+          "name": "Instagram"
+        }
+      },
+      {
+        "id": 6,
+        "url": "myband",
+        "socialMediaId": 1,
+        "announcementId": 3,
+        "socialMedia": {
+          "id": 1,
+          "name": "Facebook"
+        }
+      }
+    ],
+    "tags": [
+      {
+        "id": 1,
+        "name": "Compositor(a)"
+      },
+      {
+        "id": 2,
+        "name": "Multi-instrumentista"
+      },
+      {
+        "id": 3,
+        "name": "Produtor(a) musical"
+      }
+    ]
+  }
 }
 ```
 
-### `GET api/announcements`
+`GET api/announcement`
 
 Retrieve a list of all announcements.
 
@@ -125,24 +187,280 @@ Retrieve a list of all announcements.
   "data": [
     {
       "id": 2,
-      "title": "Guitarrista de Ska procura banda profissional",
-      "name": "Matheus Alexandre",
-      "number": "123456789",
-      "email": "john@example.com",
-      "type": "musician",
-      "state": "SP",
-      "city": "São Paulo",
-      "description": "Sou guitarrista há 10 anos, gosto muito de tocar Ska, hardcore e coisas parecidas. Procuro algo sério.",
-      "createdAt": "2025-02-25T11:06:49.909Z",
-      "updateAt": "2025-02-25T11:06:49.909Z"
+      "title": "Looking for a Drummer",
+      "name": "John Doe",
+      "age": 25,
+      "type": "Band",
+      "state": "California",
+      "city": "Los Angeles",
+      "description": "We need a drummer for our rock band!",
+      "createdAt": "2025-02-26T01:53:52.926Z",
+      "updatedAt": "2025-02-26T01:53:52.926Z",
+      "genres": [
+        {
+          "id": 1,
+          "name": "Rock"
+        },
+        {
+          "id": 2,
+          "name": "Classic Rock"
+        }
+      ],
+      "instruments": [
+        {
+          "id": 3,
+          "name": "Agogô",
+          "type": "Percussão"
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "name": "Compositor(a)"
+        },
+        {
+          "id": 2,
+          "name": "Multi-instrumentista"
+        },
+        {
+          "id": 3,
+          "name": "Produtor(a) musical"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Looking for a Drummer",
+      "name": "John Doe",
+      "age": 25,
+      "type": "Band",
+      "state": "California",
+      "city": "Los Angeles",
+      "description": "We need a drummer for our rock band!",
+      "createdAt": "2025-02-26T01:57:36.849Z",
+      "updatedAt": "2025-02-26T01:57:36.849Z",
+      "genres": [
+        {
+          "id": 1,
+          "name": "Rock"
+        },
+        {
+          "id": 2,
+          "name": "Classic Rock"
+        }
+      ],
+      "instruments": [
+        {
+          "id": 3,
+          "name": "Agogô",
+          "type": "Percussão"
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "name": "Compositor(a)"
+        },
+        {
+          "id": 2,
+          "name": "Multi-instrumentista"
+        },
+        {
+          "id": 3,
+          "name": "Produtor(a) musical"
+        }
+      ]
     }
   ]
 }
 ```
 
-### `GET api/instruments`
+`PUT api/announcement/:id`
 
-Retrieve a list of all genres.
+Retrieve a list of all announcements.
+
+**Request Body**:
+
+```json
+{
+  "title": "Looking for a Drummer",
+  "name": "John Doe",
+  "number": "123456789",
+  "email": "john@example.com",
+  "age": 25,
+  "about": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam justo nisi, tristique nec elit ac, ornare mattis lectus. Suspendisse potenti. Sed sit amet neque at eros rutrum molestie pretium quis dui. Phasellus pellentesque pellentesque luctus.",
+  "type": "Band",
+  "genreIds": [1, 2],
+  "state": "California",
+  "city": "Los Angeles",
+  "description": "We need a drummer for our rock band!",
+  "instrumentIds": [3],
+  "socialLinks": [
+    { "socialMediaId": 1, "url": "myband" },
+    { "socialMediaId": 2, "url": "myband" }
+  ],
+  "tagIds": [1, 2, 3]
+}
+```
+
+**Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 3,
+    "title": "Looking for a Drummer",
+    "name": "John Doe",
+    "age": 25,
+    "about": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam justo nisi, tristique nec elit ac, ornare mattis lectus. Suspendisse potenti. Sed sit amet neque at eros rutrum molestie pretium quis dui. Phasellus pellentesque pellentesque luctus.",
+    "number": "123456789",
+    "email": "john@example.com",
+    "type": "Band",
+    "state": "California",
+    "city": "Los Angeles",
+    "description": "We need a drummer for our rock band!",
+    "createdAt": "2025-02-26T01:57:36.849Z",
+    "updatedAt": "2025-02-26T01:57:36.849Z",
+    "genres": [
+      {
+        "id": 1,
+        "name": "Rock"
+      },
+      {
+        "id": 2,
+        "name": "Classic Rock"
+      }
+    ],
+    "instruments": [
+      {
+        "id": 3,
+        "name": "Agogô",
+        "type": "Percussão"
+      }
+    ],
+    "socialLinks": [
+      {
+        "id": 5,
+        "url": "myband",
+        "socialMediaId": 2,
+        "announcementId": 3,
+        "socialMedia": {
+          "id": 2,
+          "name": "Instagram"
+        }
+      },
+      {
+        "id": 6,
+        "url": "myband",
+        "socialMediaId": 1,
+        "announcementId": 3,
+        "socialMedia": {
+          "id": 1,
+          "name": "Facebook"
+        }
+      }
+    ],
+    "tags": [
+      {
+        "id": 1,
+        "name": "Compositor(a)"
+      },
+      {
+        "id": 2,
+        "name": "Multi-instrumentista"
+      },
+      {
+        "id": 3,
+        "name": "Produtor(a) musical"
+      }
+    ]
+  }
+}
+```
+
+`DELETE api/announcement/:id`
+
+**Response**:
+
+```json
+{
+  "message": "Announcement not found"
+}
+```
+
+`GET api/announcement/:id`
+
+**Response**:
+
+```json
+{
+  "id": 4,
+  "title": "Looking for a Drummer",
+  "name": "John Doe",
+  "age": 25,
+  "about": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam justo nisi, tristique nec elit ac, ornare mattis lectus. Suspendisse potenti. Sed sit amet neque at eros rutrum molestie pretium quis dui. Phasellus pellentesque pellentesque luctus.",
+  "number": "123456789",
+  "email": "john@example.com",
+  "type": "Band",
+  "state": "California",
+  "city": "Los Angeles",
+  "description": "We need a drummer for our rock band!",
+  "createdAt": "2025-02-26T02:09:09.036Z",
+  "updatedAt": "2025-02-26T02:09:09.036Z",
+  "socialLinks": [
+    {
+      "id": 7,
+      "url": "myband",
+      "socialMediaId": 2,
+      "socialMediaName": "Instagram"
+    },
+    {
+      "id": 8,
+      "url": "myband",
+      "socialMediaId": 1,
+      "socialMediaName": "Facebook"
+    }
+  ],
+  "genres": [
+    {
+      "id": 1,
+      "name": "Rock"
+    },
+    {
+      "id": 2,
+      "name": "Classic Rock"
+    }
+  ],
+  "instruments": [
+    {
+      "id": 3,
+      "name": "Agogô",
+      "type": "Percussão"
+    }
+  ],
+  "tags": [
+    {
+      "id": 1,
+      "name": "Compositor(a)"
+    },
+    {
+      "id": 2,
+      "name": "Multi-instrumentista"
+    },
+    {
+      "id": 3,
+      "name": "Produtor(a) musical"
+    }
+  ]
+}
+```
+
+### Instruments Endpoints
+
+`GET api/instruments`
+
+Retrieve a list of all instruments.
 
 **Response**:
 
@@ -167,6 +485,66 @@ Retrieve a list of all genres.
     }
   ]
 }
+```
+
+### Genres Endpoints
+
+`GET api/genre`
+
+Retrieve a list of all genres.
+
+**Response**:
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Rock"
+  },
+  {
+    "id": 2,
+    "name": "Classic Rock"
+  },
+  {
+    "id": 3,
+    "name": "Alternative Rock"
+  },
+  {
+    "id": 4,
+    "name": "Punk Rock"
+  },
+  {
+    "id": 5,
+    "name": "Indie Rock"
+  },
+  {
+    "id": 6,
+    "name": "Pop"
+  }
+]
+```
+
+### Tags Endpoints
+
+`GET api/tag`
+
+**Response**:
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Compositor(a)"
+  },
+  {
+    "id": 2,
+    "name": "Multi-instrumentista"
+  },
+  {
+    "id": 3,
+    "name": "Produtor(a) musical"
+  }
+]
 ```
 
 ## Environment Variables

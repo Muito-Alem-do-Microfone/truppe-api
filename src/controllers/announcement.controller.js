@@ -191,7 +191,12 @@ const updateAnnouncement = async (req, res) => {
 
 const getAnnouncements = async (req, res) => {
   try {
-    const announcementsList = await prisma.announcement.findMany();
+    const announcementsList = await prisma.announcement.findMany({
+      include: {
+        genres: true,
+        instruments: true,
+      },
+    });
     res.send(announcementsList);
   } catch (err) {
     res.status(500).send({
@@ -201,9 +206,55 @@ const getAnnouncements = async (req, res) => {
   }
 };
 
+const getAnnouncementById = async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  try {
+    const announcement = await prisma.announcement.findUnique({
+      where: { id },
+      include: {
+        socialLinks: {
+          include: {
+            socialMedia: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        genres: true,
+        instruments: true,
+      },
+    });
+
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found" });
+    }
+
+    const socialLinks = announcement.socialLinks.map((socialLink) => ({
+      id: socialLink.id,
+      url: socialLink.url,
+      socialMediaId: socialLink.socialMedia.id,
+      socialMediaName: socialLink.socialMedia.name,
+    }));
+
+    res.status(200).json({
+      ...announcement,
+      socialLinks,
+    });
+  } catch (err) {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while retrieving the announcement.",
+    });
+  }
+};
+
 export const announcementController = {
   createAnnouncement,
   deleteAnnouncement,
   updateAnnouncement,
   getAnnouncements,
+  getAnnouncementById,
 };

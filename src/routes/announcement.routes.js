@@ -6,6 +6,7 @@ const {
   deleteAnnouncement,
   updateAnnouncement,
   getAnnouncements,
+  getAnnouncementById,
 } = announcementController;
 
 const router = express.Router();
@@ -15,6 +16,7 @@ export default (app) => {
   router.delete("/:id", deleteAnnouncement);
   router.put("/:id", updateAnnouncement);
   router.get("/", getAnnouncements);
+  router.get("/:id", getAnnouncementById);
 
   app.use("/api/announcement", router);
 };

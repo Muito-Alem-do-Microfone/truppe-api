@@ -16,6 +16,7 @@ const createAnnouncement = async (req, res) => {
     description,
     instrumentIds,
     socialLinks,
+    tagIds,
   } = req.body;
 
   if (
@@ -30,7 +31,8 @@ const createAnnouncement = async (req, res) => {
     !state ||
     !city ||
     !description ||
-    !instrumentIds
+    !instrumentIds ||
+    !tagIds
   ) {
     return res.status(400).send({
       message: "One or more required fields are missing",
@@ -62,11 +64,15 @@ const createAnnouncement = async (req, res) => {
             socialMedia: { connect: { id: socialMediaId } },
           })),
         },
+        tags: {
+          connect: tagIds.map((tagId) => ({ id: tagId })),
+        },
       },
       include: {
         genres: true,
         instruments: true,
         socialLinks: { include: { socialMedia: true } },
+        tags: true,
       },
     });
 
@@ -118,6 +124,7 @@ const updateAnnouncement = async (req, res) => {
     about,
     type,
     genreIds,
+    tagIds,
     state,
     city,
     description,
@@ -137,7 +144,8 @@ const updateAnnouncement = async (req, res) => {
     !state ||
     !city ||
     !description ||
-    !instrumentIds
+    !instrumentIds ||
+    !tagIds
   ) {
     return res.status(400).send({
       message:
@@ -180,11 +188,15 @@ const updateAnnouncement = async (req, res) => {
             socialMedia: { connect: { id: socialMediaId } },
           })),
         },
+        tags: {
+          set: tagIds.map((tagId) => ({ id: tagId })),
+        },
       },
       include: {
         genres: true,
         instruments: true,
         socialLinks: { include: { socialMedia: true } },
+        tags: true,
       },
     });
 
@@ -207,6 +219,7 @@ const getAnnouncements = async (req, res) => {
       include: {
         genres: true,
         instruments: true,
+        tags: true,
       },
     });
     announcementsList.forEach((announcement) => {
@@ -242,6 +255,7 @@ const getAnnouncementById = async (req, res) => {
         },
         genres: true,
         instruments: true,
+        tags: true,
       },
     });
 

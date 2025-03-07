@@ -1,0 +1,32 @@
+name: CI/CD Pipeline - Deploy to Server
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🔧 Install Dependencies
+        run: npm install
+
+      - name: ✅ Run Tests
+        run: npm run test
+
+      - name: 🔑 Setup SSH Key
+        run: |
+          echo "${{ secrets.SERVER_SSH_KEY }}" > id_rsa
+          chmod 600 id_rsa
+
+      - name: 🚀 Deploy to Server via SSH
+        run: ssh -i id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          cd /madm-api
+          git pull origin main
+          docker-compose build
+          docker-compose up -d
+          EOF

@@ -28,7 +28,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /caminho/para/seu/projeto
+            cd /madm-api
             git pull origin main
             docker-compose build
             docker-compose up -d

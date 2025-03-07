@@ -14,7 +14,7 @@ jobs:
           curl -H "Content-Type: application/json" \
           -X POST \
           -d '{
-            "username": "🚀 Deploy Bot",
+            "username": "🚀 Deploy Karibou",
             "embeds": [{
               "title": "🛠 Build in Progress",
               "description": "🔄 `madm-api` is being updated. Grab a coffee ☕ while I work! 🚀",
@@ -61,7 +61,7 @@ jobs:
           curl -H "Content-Type: application/json" \
           -X POST \
           -d '{
-            "username": "🚀 Deploy Bot",
+            "username": "🚀 Deploy Karibou",
             "embeds": [{
               "title": "✅ Deployment Complete",
               "description": "✨ `madm-api` is now live and ready to rock! 🎸🔥",
@@ -80,7 +80,7 @@ jobs:
           curl -H "Content-Type: application/json" \
           -X POST \
           -d '{
-            "username": "🚨 Deploy Bot",
+            "username": "🚨 Deploy Karibou",
             "embeds": [{
               "title": "❌ Uh-oh! Deployment Failed!",
               "description": "🚨 Something went wrong updating `madm-api`. Check GitHub Actions logs for details.",

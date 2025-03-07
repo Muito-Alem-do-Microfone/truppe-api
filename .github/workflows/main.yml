@@ -18,6 +18,16 @@ jobs:
       - name: ✅ Run Tests
         run: npm run test
 
+      - name: 🚀 Notify Discord (Build Started)
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "username": "🚀 Deploy Bot",
+            "content": "🛠 **Build in Progress!**\n\n🔄 `madm-api` is now getting updated! Grab a coffee ☕ and I’ll ping you when it’s ready! 🚀"
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
       - name: 🔑 Setup SSH Key (Ed25519)
         run: |
           echo "${{ secrets.SERVER_SSH_KEY }}" > id_ed25519
@@ -30,9 +40,31 @@ jobs:
           ssh -i id_ed25519 -o StrictHostKeyChecking=no root@${{ secrets.SERVER_HOST }} <<EOF
           cd ~/madm-api
           git pull origin main
-
+          
           cd ~/docker
           docker-compose pull
           docker-compose build
           docker-compose up -d
           EOF
+
+      - name: 🎉 Notify Discord (Deployment Success)
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "username": "🚀 Deploy Bot",
+            "content": "✅ **Deployment Complete!**\n\n✨ `madm-api` is now live and ready to rock! 🎸🔥\n\n💡 Don’t forget to check if everything is working smoothly! 🚀"
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: ❌ Notify Discord (Deployment Failed)
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "username": "🚨 Deploy Bot",
+            "content": "❌ **Uh-oh! Deployment Failed!**\n\n🚨 Something went wrong while updating `madm-api`. \n\n⚠️ Check the logs in GitHub Actions and fix any issues before retrying! 🚑"
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}

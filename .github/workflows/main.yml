@@ -14,7 +14,7 @@ jobs:
           curl -H "Content-Type: application/json" \
           -X POST \
           -d '{
-            "username": "🚀 Deploy Alisson",
+            "username": "🚀 Deploy Karibou",
             "embeds": [{
               "title": "🛠 Build in Progress",
               "description": "🔄 `madm-api` is being updated. Grab a coffee ☕ while I work! 🚀",

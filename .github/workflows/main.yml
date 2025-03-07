@@ -18,13 +18,16 @@ jobs:
       - name: ✅ Run Tests
         run: npm run test
 
-      - name: 🔑 Setup SSH Key
+      - name: 🔑 Setup SSH Key (Ed25519)
         run: |
-          echo "${{ secrets.SERVER_SSH_KEY }}" > id_rsa
-          chmod 600 id_rsa
+          echo "${{ secrets.SERVER_SSH_KEY }}" > id_ed25519
+          chmod 600 id_ed25519
+          eval $(ssh-agent -s)
+          ssh-add id_ed25519
 
       - name: 🚀 Deploy to Server via SSH
-        run: ssh -i id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        run: |
+          ssh -i id_ed25519 -o StrictHostKeyChecking=no root@${{ secrets.SERVER_HOST }} <<EOF
           cd /madm-api
           git pull origin main
           docker-compose build

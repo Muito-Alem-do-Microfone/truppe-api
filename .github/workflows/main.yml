@@ -9,6 +9,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: 🚀 Notify Discord (Build Started)
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "username": "🚀 Deploy Bot",
+            "embeds": [{
+              "title": "🛠 Build in Progress",
+              "description": "🔄 `madm-api` is being updated. Grab a coffee ☕ while I work! 🚀",
+              "color": 16776960, 
+              "fields": [
+                { "name": "Branch", "value": "main", "inline": true },
+                { "name": "Environment", "value": "Production", "inline": true }
+              ]
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
       - name: 📥 Checkout Repository
         uses: actions/checkout@v3
 
@@ -17,16 +35,6 @@ jobs:
 
       - name: ✅ Run Tests
         run: npm run test
-
-      - name: 🚀 Notify Discord (Build Started)
-        run: |
-          curl -H "Content-Type: application/json" \
-          -X POST \
-          -d '{
-            "username": "🚀 Deploy Bot",
-            "content": "🛠 **Build in Progress!**\n\n🔄 `madm-api` is now getting updated! Grab a coffee ☕ and I’ll ping you when it’s ready! 🚀"
-          }' \
-          ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: 🔑 Setup SSH Key (Ed25519)
         run: |
@@ -40,21 +48,29 @@ jobs:
           ssh -i id_ed25519 -o StrictHostKeyChecking=no root@${{ secrets.SERVER_HOST }} <<EOF
           cd ~/madm-api
           git pull origin main
-          
+
           cd ~/docker
           docker-compose pull
           docker-compose build
           docker-compose up -d
           EOF
 
-      - name: 🎉 Notify Discord (Deployment Success)
+      - name: ✅ Notify Discord (Deployment Success)
         if: success()
         run: |
           curl -H "Content-Type: application/json" \
           -X POST \
           -d '{
             "username": "🚀 Deploy Bot",
-            "content": "✅ **Deployment Complete!**\n\n✨ `madm-api` is now live and ready to rock! 🎸🔥\n\n💡 Don’t forget to check if everything is working smoothly! 🚀"
+            "embeds": [{
+              "title": "✅ Deployment Complete",
+              "description": "✨ `madm-api` is now live and ready to rock! 🎸🔥",
+              "color": 65280, 
+              "fields": [
+                { "name": "Branch", "value": "main", "inline": true },
+                { "name": "Environment", "value": "Production", "inline": true }
+              ]
+            }]
           }' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
 
@@ -65,6 +81,14 @@ jobs:
           -X POST \
           -d '{
             "username": "🚨 Deploy Bot",
-            "content": "❌ **Uh-oh! Deployment Failed!**\n\n🚨 Something went wrong while updating `madm-api`. \n\n⚠️ Check the logs in GitHub Actions and fix any issues before retrying! 🚑"
+            "embeds": [{
+              "title": "❌ Uh-oh! Deployment Failed!",
+              "description": "🚨 Something went wrong updating `madm-api`. Check GitHub Actions logs for details.",
+              "color": 16711680, 
+              "fields": [
+                { "name": "Branch", "value": "main", "inline": true },
+                { "name": "Environment", "value": "Production", "inline": true }
+              ]
+            }]
           }' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}

@@ -10,7 +10,7 @@ import {
   tagRoutes,
 } from "./src/routes/index.js";
 
-const app = express();
+export const app = express();
 
 const corsOptions = {
   origin: "*",

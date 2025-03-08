@@ -1,6 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
+const webhookURL =
+  "https://discord.com/api/webhooks/1347792793782980772/dd2Fo9sc0W68uTGAj6GAdQEuq4_-x0BEJtVgJK_I2RzSHu_euaEe5HBbGwdpvahH5DY4";
+
 const createAnnouncement = async (req, res) => {
   const {
     title,
@@ -76,12 +79,73 @@ const createAnnouncement = async (req, res) => {
       },
     });
 
+    const payload = {
+      username: "Muito Além do Microfone - Busque sua banda 🎵",
+      embeds: [
+        {
+          title: `Novo Anúncio: ${title}`,
+          description: `${city}, ${state}\n\n${description}`,
+          color: 0x2ecc71,
+          timestamp: new Date().toISOString(),
+          fields: [
+            { name: "Nome", value: name, inline: true },
+            { name: "Tipo", value: type, inline: true },
+
+            {
+              name: "Gêneros",
+              value:
+                announcement.genres.map((g) => g.name).join(", ") ||
+                "Não informado",
+              inline: true,
+            },
+            {
+              name: "Instrumentos",
+              value:
+                announcement.instruments.map((i) => i.name).join(", ") ||
+                "Não informado",
+              inline: true,
+            },
+
+            {
+              name: "Contato",
+              value: `${number} | ${email}`,
+              inline: false,
+            },
+
+            {
+              name: "Redes Sociais",
+              value:
+                announcement.socialLinks
+                  .map((link) => `[${link.socialMedia.name}](${link.url})`)
+                  .join(" • ") || "Nenhuma informada",
+              inline: false,
+            },
+          ],
+          footer: {
+            text: "Busque sua banda por MADM",
+          },
+        },
+      ],
+    };
+
+    const response = await fetch(webhookURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to send Discord message:", await response.text());
+    } else {
+      console.log("✅ Announcement saved & message sent to Discord!");
+    }
+
     return res.status(201).json({
       status: "success",
       data: announcement,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Error creating announcement:", err);
     return res.status(500).json({
       status: "error",
       message: "An error occurred while creating the announcement.",

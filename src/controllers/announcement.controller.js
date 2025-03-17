@@ -80,7 +80,7 @@ const createAnnouncement = async (req, res) => {
     });
 
     const payload = {
-      username: "Muito Além do Microfone - Busque sua banda 🎵",
+      username: "Muito Além do Microfone -- Busque sua banda 🎵",
       embeds: [
         {
           title: `Novo Anúncio: ${title}`,

@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { createConfirmationCode } from "../utils/index.js";
 import { sendEmail } from "../services/email/sendEmail.js";
+import { uploadToS3 } from "../services/s3/imageUpload.js";
 
 const prisma = new PrismaClient();
 
@@ -46,6 +47,8 @@ const createAnnouncement = async (req, res) => {
   }
 
   try {
+    const imageUrl = req.file ? await uploadToS3(req.file) : null;
+
     const announcement = await prisma.announcement.create({
       data: {
         title,
@@ -58,6 +61,7 @@ const createAnnouncement = async (req, res) => {
         description,
         age,
         about,
+        imageUrl,
         genres: {
           connect: genreIds.map((genreId) => ({ id: genreId })),
         },

@@ -1,7 +1,12 @@
 import "dotenv/config";
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
+import { getConfirmationEmailHtml } from "./templates/announcementConfirmation.js";
 
-export const sendEmail = async ({ recipientEmail, recipientName }) => {
+export const sendEmail = async ({
+  recipientEmail,
+  recipientName,
+  confirmationCode,
+}) => {
   const mailerSend = new MailerSend({
     apiKey: process.env.MAILERSEND_API,
   });
@@ -18,8 +23,7 @@ export const sendEmail = async ({ recipientEmail, recipientName }) => {
     .setTo(recipients)
     .setReplyTo(sentFrom)
     .setSubject("Confirmação de anúncio")
-    .setHtml("<strong>This is the HTML content</strong>")
-    .setText("This is the text content");
+    .setHtml(getConfirmationEmailHtml(confirmationCode));
 
   try {
     await mailerSend.email.send(emailParams);

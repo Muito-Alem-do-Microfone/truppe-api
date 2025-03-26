@@ -1,4 +1,7 @@
 import { PrismaClient } from "@prisma/client";
+import { createConfirmationCode } from "../utils/index.js";
+import { sendEmail } from "../services/email/sendEmail.js";
+
 const prisma = new PrismaClient();
 
 const webhookURL =
@@ -79,7 +82,30 @@ const createAnnouncement = async (req, res) => {
       },
     });
 
-    const payload = {
+    const { confirmationCode, codeExpiration } = createConfirmationCode();
+
+    await prisma.announcementConfirmation.create({
+      data: {
+        code: confirmationCode,
+        expiresAt: codeExpiration,
+        announcementId: announcement.id,
+      },
+    });
+
+    const emailStatus = await sendEmail({
+      recipientEmail: email,
+      recipientName: name,
+      confirmationCode,
+    });
+
+    if (!emailStatus) {
+      return res.status(500).json({
+        status: "error",
+        message: "An error occurred while sending the confirmation email.",
+      });
+    }
+
+    const discordPayload = {
       username: "Muito Além do Microfone -- Busque sua banda 🎵",
       embeds: [
         {
@@ -131,7 +157,7 @@ const createAnnouncement = async (req, res) => {
     const response = await fetch(webhookURL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(discordPayload),
     });
 
     if (!response.ok) {
@@ -346,10 +372,67 @@ const getAnnouncementById = async (req, res) => {
   }
 };
 
+const confirmAnnouncement = async (req, res) => {
+  const { code, email } = req.body;
+
+  if (!code || !email) {
+    return res.status(400).json({
+      status: "error",
+      message: "Código e e-mail são obrigatórios.",
+    });
+  }
+
+  try {
+    const confirmation = await prisma.announcementConfirmation.findFirst({
+      where: {
+        code,
+        confirmedAt: null,
+        expiresAt: { gte: new Date() },
+        announcement: {
+          email,
+        },
+      },
+      include: {
+        announcement: true,
+      },
+    });
+
+    if (!confirmation) {
+      return res.status(404).json({
+        status: "error",
+        message: "Código ou e-mail inválido, ou o código expirou.",
+      });
+    }
+
+    await prisma.$transaction([
+      prisma.announcement.update({
+        where: { id: confirmation.announcementId },
+        data: { status: "CONFIRMED" },
+      }),
+      prisma.announcementConfirmation.update({
+        where: { id: confirmation.id },
+        data: { confirmedAt: new Date() },
+      }),
+    ]);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Anúncio confirmado com sucesso!",
+    });
+  } catch (err) {
+    console.error("Erro ao confirmar anúncio:", err);
+    return res.status(500).json({
+      status: "error",
+      message: "Erro ao confirmar o anúncio.",
+    });
+  }
+};
+
 export const announcementController = {
   createAnnouncement,
   deleteAnnouncement,
   updateAnnouncement,
   getAnnouncements,
   getAnnouncementById,
+  confirmAnnouncement,
 };

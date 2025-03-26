@@ -19,12 +19,23 @@ vi.mock("@prisma/client", () => {
       delete: vi.fn(),
       findMany: vi.fn(),
     },
+    announcementConfirmation: {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
+    },
   };
   return { PrismaClient: vi.fn(() => mPrismaClient) };
 });
 
+// mock:
+vi.mock("../services/email/sendEmail.js", () => ({
+  sendEmail: vi.fn(),
+}));
+
 import announcementRoutes from "../routes/announcement.routes.js";
 import { PrismaClient } from "@prisma/client";
+import { sendEmail } from "../services/email/sendEmail.js";
 
 describe("Announcement API", () => {
   let app;
@@ -58,6 +69,7 @@ describe("Announcement API", () => {
     });
 
     it("should create an announcement successfully", async () => {
+      sendEmail.mockResolvedValue(true);
       const reqBody = {
         title: "Test Title",
         name: "Test Name",
@@ -74,18 +86,19 @@ describe("Announcement API", () => {
         socialLinks: [{ socialMediaId: 5, url: "http://example.com" }],
         tagIds: [6, 7],
       };
+
       const createdAnnouncement = {
         id: 1,
-        title: "Test Title",
-        name: "Test Name",
-        number: "123456",
-        email: "test@example.com",
-        age: 30,
-        about: "Test About",
-        type: "Test Type",
-        state: "Test State",
-        city: "Test City",
-        description: "Test Description",
+        title: reqBody.title,
+        name: reqBody.name,
+        number: reqBody.number,
+        email: reqBody.email,
+        age: reqBody.age,
+        about: reqBody.about,
+        type: reqBody.type,
+        state: reqBody.state,
+        city: reqBody.city,
+        description: reqBody.description,
         genres: [
           { id: 1, name: "Genre1" },
           { id: 2, name: "Genre2" },
@@ -106,13 +119,32 @@ describe("Announcement API", () => {
           { id: 7, name: "Tag2" },
         ],
       };
+
+      const createdConfirmation = {
+        id: "conf_123",
+        code: "ABC123",
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+        confirmedAt: null,
+        createdAt: new Date(),
+        announcementId: createdAnnouncement.id,
+      };
+
       prisma.announcement.create.mockResolvedValue(createdAnnouncement);
+      prisma.announcementConfirmation.create.mockResolvedValue(
+        createdConfirmation
+      );
+
       const res = await request(app).post("/api/announcement").send(reqBody);
+
       expect(res.statusCode).toBe(201);
       expect(res.body).toEqual({
         status: "success",
         data: createdAnnouncement,
       });
+
+      expect(prisma.announcement.create).toHaveBeenCalled();
+      expect(prisma.announcementConfirmation.create).toHaveBeenCalled();
+      expect(sendEmail).toHaveBeenCalled();
     });
 
     it("should return 500 when creation fails", async () => {

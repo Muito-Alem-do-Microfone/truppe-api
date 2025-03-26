@@ -25,6 +25,8 @@ model Announcement {
   genres      Genre[]      @relation("AnnouncementGenres")
   instruments Instrument[] @relation("AnnouncementInstruments")
   tags        Tags[]       @relation("AnnouncementTags")
+  status      AnnouncementStatus @default(PENDING)
+  AnnouncementConfirmation AnnouncementConfirmation?
 }
 
 model Instrument {
@@ -59,4 +61,19 @@ model Tags {
   id    Int @id @default(autoincrement())
   name  String @unique
   announcement  Announcement[] @relation("AnnouncementTags")
+}
+
+enum AnnouncementStatus {
+  PENDING
+  CONFIRMED
+}
+
+model AnnouncementConfirmation {
+  id              String       @id @default(cuid())
+  announcement    Announcement @relation(fields: [announcementId], references: [id])
+  announcementId  Int          @unique
+  code            String
+  expiresAt       DateTime
+  confirmedAt     DateTime?
+  createdAt       DateTime     @default(now())
 }

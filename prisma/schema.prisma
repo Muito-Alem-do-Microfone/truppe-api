@@ -21,6 +21,7 @@ model Announcement {
   description String
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  imageUrl    String?
   socialLinks SocialLink[]
   genres      Genre[]      @relation("AnnouncementGenres")
   instruments Instrument[] @relation("AnnouncementInstruments")

@@ -1,5 +1,6 @@
 import express from "express";
 import { announcementController } from "../controllers/index.js";
+import { upload } from "../middlewares/upload.js";
 
 const {
   createAnnouncement,
@@ -13,7 +14,7 @@ const {
 const router = express.Router();
 
 export default (app) => {
-  router.post("/", createAnnouncement);
+  router.post("/", upload.single("image"), createAnnouncement);
   router.delete("/:id", deleteAnnouncement);
   router.put("/:id", updateAnnouncement);
   router.get("/", getAnnouncements);

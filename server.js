@@ -5,6 +5,7 @@ import { PrismaClient } from "@prisma/client";
 
 import {
   announcementRoutes,
+  formDataRoutes,
   genreRoutes,
   instrumentRoutes,
   tagRoutes,
@@ -29,6 +30,7 @@ announcementRoutes(app);
 instrumentRoutes(app);
 genreRoutes(app);
 tagRoutes(app);
+formDataRoutes(app);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

@@ -1,5 +1,3 @@
-import "newrelic";
-
 import express, { json, urlencoded } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";

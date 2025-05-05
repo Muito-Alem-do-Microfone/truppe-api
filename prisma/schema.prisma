@@ -16,7 +16,7 @@ model Announcement {
   number      String
   email       String
   type        String
-  state       String
+  state       State[]      @relation("AnnoucementState")
   city        String
   description String
   createdAt   DateTime     @default(now())
@@ -77,4 +77,10 @@ model AnnouncementConfirmation {
   expiresAt       DateTime
   confirmedAt     DateTime?
   createdAt       DateTime     @default(now())
+}
+
+model State {
+  id    Int @id @default(autoincrement())
+  name  String @unique
+  announcement  Announcement[] @relation("AnnoucementState")
 }

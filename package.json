@@ -8,7 +8,7 @@
     "test": "vitest run",
     "test-watch": "vitest",
     "test-coverage": "vitest run --coverage",
-    "prepare": "husky install",
+    "prepare": "test \"$SKIP_HUSKY\" = \"true\" || husky install",
     "start": "node -r newrelic server.js",
     "dev": "nodemon server.js",
     "prisma:seed:instruments": "js-node prisma/instrumentsSeed.js",

@@ -8,6 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
+ENV SKIP_HUSKY=true
 RUN npm install --omit=dev
 
 # Copy the rest of the application files

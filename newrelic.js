@@ -1,7 +1,7 @@
 // newrelic.js
-import "dotenv/config"; // já carrega as variáveis do .env
+require("dotenv").config();
 
-export const config = {
+exports.config = {
   app_name: [process.env.NEW_RELIC_APP_NAME || "madm-api"],
   license_key: process.env.NEW_RELIC_LICENSE_KEY || "dummy-key",
   logging: {

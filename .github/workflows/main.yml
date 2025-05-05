@@ -51,8 +51,9 @@ jobs:
 
           cd ~/docker
           docker-compose pull
-          docker-compose build
-          docker-compose up -d
+          docker-compose build --no-cache
+          docker-compose up -d madm-api
+          docker image prune -f
           EOF
 
       - name: ✅ Notify Discord (Deployment Success)

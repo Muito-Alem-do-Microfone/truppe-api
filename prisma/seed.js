@@ -3,6 +3,7 @@ import instrumentsSeed from "./seeds/instrumentsSeed.js";
 import genresSeed from "./seeds/genresSeed.js";
 import socialMediaSeed from "./seeds/socialMediaSeed.js";
 import tagsSeed from "./seeds/tagsSeed.js";
+import statesSeed from "./seeds/statesSeed.js";
 
 const prisma = new PrismaClient();
 
@@ -11,6 +12,7 @@ async function main() {
   await genresSeed(prisma);
   await socialMediaSeed(prisma);
   await tagsSeed(prisma);
+  await statesSeed(prisma);
 
   console.log("Seeding done!");
 }

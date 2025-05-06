@@ -30,7 +30,7 @@ const statesSeed = async (prisma) => {
   ];
 
   for (const name of states) {
-    await prisma.states.upset({
+    await prisma.state.upsert({
       where: { name },
       update: {},
       create: { name },

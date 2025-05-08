@@ -1,11 +1,3 @@
-ENV NEW_RELIC_NO_CONFIG_FILE=true
-ENV NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
-ENV NEW_RELIC_LOG=stdout
-ENV NEW_RELIC_AI_MONITORING_ENABLED=true
-ENV NEW_RELIC_CUSTOM_INSIGHTS_EVENTS_MAX_SAMPLES_STORED=100k
-ENV NEW_RELIC_SPAN_EVENTS_MAX_SAMPLES_STORED=10k
-
-
 # Use Node.js LTS as base image
 FROM node:18
 
@@ -16,6 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
+ENV SKIP_HUSKY=true
 RUN npm install --omit=dev
 
 # Copy the rest of the application files

@@ -3,6 +3,7 @@ import genreRoutes from "./genre.routes.js";
 import instrumentRoutes from "./instrument.routes.js";
 import tagRoutes from "./tag.routes.js";
 import formDataRoutes from "./formData.routes.js";
+import statesRoutes from "./states.routes.js";
 
 export {
   announcementRoutes,
@@ -10,4 +11,5 @@ export {
   instrumentRoutes,
   tagRoutes,
   formDataRoutes,
+  statesRoutes,
 };

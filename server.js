@@ -10,6 +10,7 @@ import {
   genreRoutes,
   instrumentRoutes,
   tagRoutes,
+  statesRoutes,
 } from "./src/routes/index.js";
 
 export const app = express();
@@ -32,6 +33,7 @@ instrumentRoutes(app);
 genreRoutes(app);
 tagRoutes(app);
 formDataRoutes(app);
+statesRoutes(app);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

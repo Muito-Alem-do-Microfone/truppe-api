@@ -547,6 +547,29 @@ Retrieve a list of all genres.
 ]
 ```
 
+### States Endpoints
+
+`GET api/states`
+
+**Response**:
+
+```json
+[
+  {
+    "id": 1,
+    "name": "São Paulo"
+  },
+  {
+    "id": 2,
+    "name": "Rio de Janeiro"
+  },
+  {
+    "id": 3,
+    "name": "Acre"
+  }
+]
+```
+
 ## Environment Variables
 
 | Variable       | Description                                |

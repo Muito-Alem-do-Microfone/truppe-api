@@ -382,7 +382,7 @@ const confirmAnnouncement = async (req, res) => {
   if (!code || !email) {
     return res.status(400).json({
       status: "error",
-      message: "Código e e-mail são obrigatórios.",
+      message: "Both code and email are required.",
     });
   }
 
@@ -404,7 +404,8 @@ const confirmAnnouncement = async (req, res) => {
     if (!confirmation) {
       return res.status(404).json({
         status: "error",
-        message: "Código ou e-mail inválido, ou o código expirou.",
+        message:
+          "Confirmation failed. Please check your email and confirmation code.",
       });
     }
 
@@ -421,13 +422,13 @@ const confirmAnnouncement = async (req, res) => {
 
     return res.status(200).json({
       status: "success",
-      message: "Anúncio confirmado com sucesso!",
+      message: "Announcement confirmed successfully.",
     });
   } catch (err) {
     console.error("Erro ao confirmar anúncio:", err);
     return res.status(500).json({
       status: "error",
-      message: "Erro ao confirmar o anúncio.",
+      message: "Error confirming announcement.",
     });
   }
 };

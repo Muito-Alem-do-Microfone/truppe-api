@@ -29,13 +29,14 @@ const statesSeed = async (prisma) => {
     "Distrito Federal",
   ];
 
-  for (const name of states) {
-    await prisma.state.upsert({
+
+  await Promise.all(states.map((name) =>
+    prisma.state.upsert({
       where: { name },
       update: {},
       create: { name },
-    });
-  }
+    })
+  ));
 
   console.log("✅ States seeded successfully!");
 };

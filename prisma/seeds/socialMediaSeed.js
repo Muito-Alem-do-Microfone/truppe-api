@@ -16,14 +16,13 @@ const socialMediaSeed = async (prisma) => {
     { name: "Deezer" },
   ];
 
-  // Upsert ensures that the records are created only if they don't exist
-  for (const platform of socialMediaPlatforms) {
-    await prisma.socialMedia.upsert({
+  await Promise.all(socialMediaPlatforms.map((platform) =>
+    prisma.socialMedia.upsert({
       where: { name: platform.name },
       update: {},
       create: platform,
-    });
-  }
+    })
+  ))
 
   console.log("✅ Social Media platforms seeded successfully!");
 };

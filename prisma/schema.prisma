@@ -16,7 +16,8 @@ model Announcement {
   number      String
   email       String
   type        String
-  state       State[]      @relation("AnnoucementState")
+  stateId     Int
+  state       String
   city        String
   description String
   createdAt   DateTime     @default(now())
@@ -80,7 +81,6 @@ model AnnouncementConfirmation {
 }
 
 model State {
-  id    Int @id @default(autoincrement())
+  id    Int    @id @default(autoincrement())
   name  String @unique
-  announcement  Announcement[] @relation("AnnoucementState")
 }

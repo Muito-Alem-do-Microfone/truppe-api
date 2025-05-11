@@ -30,19 +30,15 @@ const tagsSeed = async () => {
     { name: "Tem instrumentos" },
   ];
 
-  try {
-    for (const tag of tags) {
-      await prisma.tags.upsert({
-        where: { name: tag.name },
-        update: {},
-        create: tag,
-      });
-    }
-
-    console.log("✅ Tags seeded successfully!");
-  } catch (error) {
-    console.error("Error seeding tags: ", error);
-  }
+  await Promise.all(tags.map((tag) =>
+    prisma.tags.upsert({
+      where: { name: tag.name },
+      update: {},
+      create: tag,
+    })
+  ))
+  
+  console.log("✅ Tags seeded successfully!");
 };
 
 export default tagsSeed;

@@ -116,13 +116,13 @@ const genresSeed = async (prisma) => {
     "Vozes do Sertão",
   ];
 
-  for (const name of genres) {
-    await prisma.genre.upsert({
+  await Promise.all(genres.map((name) =>
+    prisma.genre.upsert({
       where: { name },
       update: {},
       create: { name },
-    });
-  }
+    })
+  ));
 
   console.log("✅ Genres seeded successfully!");
 };

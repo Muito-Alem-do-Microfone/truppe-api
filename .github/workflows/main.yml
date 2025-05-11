@@ -36,6 +36,8 @@ jobs:
 
       - name: 🔧 Install dependencies
         run: npm install --omit=dev
+        env:
+          SKIP_HUSKY: true
 
       - name: ✅ Run Tests
         run: npm run test

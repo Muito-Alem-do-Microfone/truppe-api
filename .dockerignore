@@ -1,15 +1,35 @@
+# Dependências locais
 node_modules
+
+# Arquivos de erro e debug
 npm-debug.log
 yarn-error.log
+*.log
+
+# Testes e coverage
 *.test.*
 *.spec.*
+coverage
+.vitest
+jest.config.*
+vitest.config.*
+
+# Git e config
 .git
 .gitignore
-Dockerfile
+
+# Docker infra (mantém limpo)
 docker-compose*
+.dockerignore
+
+# Variáveis locais e configs sensíveis
 .env
 .env.*
-coverage
-.vscode
+
+# SQLite e arquivos locais de banco
 *.sqlite
-*.log
+
+# IDEs e editor configs
+.vscode
+.idea
+*.swp

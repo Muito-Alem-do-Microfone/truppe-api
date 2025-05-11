@@ -1,8 +1,8 @@
 name: CI/CD Pipeline - Deploy to Server
 
 on:
-  push:
-    branches: [main]
+  release:
+    types: [published]
 
 jobs:
   test-and-deploy:
@@ -14,27 +14,33 @@ jobs:
           curl -H "Content-Type: application/json" \
           -X POST \
           -d '{
-            "username": "🚀 Deploy Karibou",
+            "username": "🚀 Deploy Gerard Way",
             "embeds": [{
               "title": "🛠 Build in Progress",
-              "description": "🔄 `madm-api` is being updated. Grab a coffee ☕ while I work! 🚀",
+              "description": "🔄 `BSB-api` is being updated. Grab a coffee ☕ while I work! 🚀",
               "color": 16776960, 
               "fields": [
-                { "name": "Branch", "value": "main", "inline": true },
+                { "name": "Release", "value": "${{ github.event.release.tag_name }}", "inline": true },
                 { "name": "Environment", "value": "Production", "inline": true }
               ]
             }]
           }' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
 
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v3
+      - name: 📥 Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
 
-      - name: 🔧 Install Dependencies
-        run: npm install
+      - name: 🔧 Install dependencies
+        run: npm install --omit=dev
 
       - name: ✅ Run Tests
         run: npm run test
+
+      - name: 📦 Archive release contents
+        run: |
+          zip -r release.zip . -x ".git/*"
 
       - name: 🔑 Setup SSH Key (Ed25519)
         run: |
@@ -43,27 +49,19 @@ jobs:
           eval $(ssh-agent -s)
           ssh-add id_ed25519
 
-      - name: 🚀 Deploy to Server via SSH with New Relic ENV
+      - name: 🚀 Deploy to Server via SSH
         run: |
-          ssh -i id_ed25519 -o StrictHostKeyChecking=no root@${{ secrets.SERVER_HOST }} <<EOF
-          cd ~/madm-api
-          git pull origin main
+          scp -i id_ed25519 -o StrictHostKeyChecking=no release.zip root@${{ secrets.SERVER_HOST }}:/root/bsb-api-release.zip
 
-          # Cria ou atualiza o docker.env com variáveis do New Relic
-          echo "NEW_RELIC_LICENSE_KEY=${{ secrets.NEW_RELIC_LICENSE_KEY }}" > ~/docker/docker.env
-          echo "NEW_RELIC_APP_NAME=madm-api" >> ~/docker/docker.env
-          echo "NEW_RELIC_NO_CONFIG_FILE=true" >> ~/docker/docker.env
-          echo "NEW_RELIC_LOG=stdout" >> ~/docker/docker.env
-          echo "NEW_RELIC_AI_MONITORING_ENABLED=true" >> ~/docker/docker.env
-          echo "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true" >> ~/docker/docker.env
-          echo "NEW_RELIC_CUSTOM_INSIGHTS_EVENTS_MAX_SAMPLES_STORED=100000" >> ~/docker/docker.env
-          echo "NEW_RELIC_SPAN_EVENTS_MAX_SAMPLES_STORED=10000" >> ~/docker/docker.env
-          echo "NEW_RELIC_LOG_LEVEL=info" >> ~/docker/docker.env
+          ssh -i id_ed25519 -o StrictHostKeyChecking=no root@${{ secrets.SERVER_HOST }} <<EOF
+          rm -rf ~/bsb-api
+          mkdir ~/bsb-api
+          unzip -o /root/bsb-api-release.zip -d ~/bsb-api
 
           cd ~/docker
           docker-compose pull
           docker-compose build --no-cache
-          docker-compose up -d madm-api
+          docker-compose up -d bsb-api
           docker image prune -f
           EOF
 
@@ -76,10 +74,10 @@ jobs:
             "username": "🚀 Deploy Karibou",
             "embeds": [{
               "title": "✅ Deployment Complete",
-              "description": "✨ `madm-api` is now live and ready to rock! 🎸🔥",
+              "description": "✨ `bsb-api` is now live and ready to rock! 🎸🔥",
               "color": 65280, 
               "fields": [
-                { "name": "Branch", "value": "main", "inline": true },
+                { "name": "Release", "value": "${{ github.event.release.tag_name }}", "inline": true },
                 { "name": "Environment", "value": "Production", "inline": true }
               ]
             }]
@@ -95,10 +93,10 @@ jobs:
             "username": "🚨 Deploy Karibou",
             "embeds": [{
               "title": "❌ Uh-oh! Deployment Failed!",
-              "description": "🚨 Something went wrong updating `madm-api`. Check GitHub Actions logs for details.",
+              "description": "🚨 Something went wrong updating `bsb-api`. Check GitHub Actions logs for details.",
               "color": 16711680, 
               "fields": [
-                { "name": "Branch", "value": "main", "inline": true },
+                { "name": "Release", "value": "${{ github.event.release.tag_name }}", "inline": true },
                 { "name": "Environment", "value": "Production", "inline": true }
               ]
             }]

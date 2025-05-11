@@ -1,52 +1,49 @@
-name: CI/CD Pipeline - Deploy to Server
+name: CI/CD Pipeline – Test & Deploy
 
 on:
+  push:
+    branches: [main]
   release:
     types: [published]
-
   workflow_dispatch:
 
 jobs:
-  test-and-deploy:
+  test:
+    name: ✅ Run Tests
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🚀 Notify Discord (Build Started)
-        run: |
-          curl -H "Content-Type: application/json" \
-          -X POST \
-          -d '{
-            "username": "🚀 Deploy Gerard Way",
-            "embeds": [{
-              "title": "🛠 Build in Progress",
-              "description": "🔄 `BSB-api` is being updated. Grab a coffee ☕ while I work! 🚀",
-              "color": 16776960, 
-              "fields": [
-                { "name": "Release", "value": "${{ github.event.release.tag_name }}", "inline": true },
-                { "name": "Environment", "value": "Production", "inline": true }
-              ]
-            }]
-          }' \
-          ${{ secrets.DISCORD_WEBHOOK_URL }}
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: 📥 Checkout release tag
+      - name: 📦 Install Dependencies
+        run: npm install
+        env:
+          SKIP_HUSKY: true
+
+      - name: 🧪 Run Tests
+        run: npm run test
+
+  deploy:
+    name: 🚀 Deploy to Server
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.release.tag_name }}
 
-      - name: 🔧 Install dependencies
+      - name: 📦 Install Production Dependencies
         run: npm install --omit=dev
         env:
           SKIP_HUSKY: true
 
-      - name: ✅ Run Tests
-        run: npm run test
-
       - name: 📦 Archive release contents
-        run: |
-          zip -r release.zip . -x ".git/*"
+        run: zip -r release.zip . -x ".git/*"
 
-      - name: 🔑 Setup SSH Key (Ed25519)
+      - name: 🔐 Setup SSH Key
         run: |
           echo "${{ secrets.SERVER_SSH_KEY }}" > id_ed25519
           chmod 600 id_ed25519
@@ -55,54 +52,16 @@ jobs:
 
       - name: 🚀 Deploy to Server via SSH
         run: |
-          scp -i id_ed25519 -o StrictHostKeyChecking=no release.zip root@${{ secrets.SERVER_HOST }}:/root/bsb-api-release.zip
+          scp -i id_ed25519 -o StrictHostKeyChecking=no release.zip root@${{ secrets.SERVER_HOST }}:/root/madm-api-release.zip
 
           ssh -i id_ed25519 -o StrictHostKeyChecking=no root@${{ secrets.SERVER_HOST }} <<EOF
-          rm -rf ~/bsb-api
-          mkdir ~/bsb-api
-          unzip -o /root/bsb-api-release.zip -d ~/bsb-api
+          rm -rf ~/madm-api
+          mkdir ~/madm-api
+          unzip -o /root/madm-api-release.zip -d ~/madm-api
 
           cd ~/docker
           docker-compose pull
           docker-compose build --no-cache
-          docker-compose up -d bsb-api
+          docker-compose up -d madm-api
           docker image prune -f
           EOF
-
-      - name: ✅ Notify Discord (Deployment Success)
-        if: success()
-        run: |
-          curl -H "Content-Type: application/json" \
-          -X POST \
-          -d '{
-            "username": "🚀 Deploy Karibou",
-            "embeds": [{
-              "title": "✅ Deployment Complete",
-              "description": "✨ `bsb-api` is now live and ready to rock! 🎸🔥",
-              "color": 65280, 
-              "fields": [
-                { "name": "Release", "value": "${{ github.event.release.tag_name }}", "inline": true },
-                { "name": "Environment", "value": "Production", "inline": true }
-              ]
-            }]
-          }' \
-          ${{ secrets.DISCORD_WEBHOOK_URL }}
-
-      - name: ❌ Notify Discord (Deployment Failed)
-        if: failure()
-        run: |
-          curl -H "Content-Type: application/json" \
-          -X POST \
-          -d '{
-            "username": "🚨 Deploy Karibou",
-            "embeds": [{
-              "title": "❌ Uh-oh! Deployment Failed!",
-              "description": "🚨 Something went wrong updating `bsb-api`. Check GitHub Actions logs for details.",
-              "color": 16711680, 
-              "fields": [
-                { "name": "Release", "value": "${{ github.event.release.tag_name }}", "inline": true },
-                { "name": "Environment", "value": "Production", "inline": true }
-              ]
-            }]
-          }' \
-          ${{ secrets.DISCORD_WEBHOOK_URL }}

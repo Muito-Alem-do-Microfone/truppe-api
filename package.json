@@ -1,22 +1,27 @@
 {
-  "name": "madm-api",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "bsb-api",
+  "version": "0.1.0",
+  "description": "Core API for the BSB platform, providing backend services and data access via REST.",
+  "main": "server.js",
   "type": "module",
   "scripts": {
     "test": "vitest run",
     "test-watch": "vitest",
     "test-coverage": "vitest run --coverage",
     "prepare": "test \"$SKIP_HUSKY\" = \"true\" || husky install",
-    "start": "node -r newrelic server.js",
+    "start": "node server.js",
     "dev": "nodemon server.js",
     "prisma:seed:instruments": "js-node prisma/instrumentsSeed.js",
     "prisma:seed:genres": "node prisma/genresSeed.js",
     "prisma:seed:socialMedia": "node prisma/socialMediaSeed.js",
-    "prisma:seed": "node prisma/seed.js"
+    "prisma:seed": "node prisma/seed.js",
+    "build": "echo 'no build step yet'"
   },
-  "author": "",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "postinstall": "npm prune --omit=dev",
+  "author": "MADM Tech Team",
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.775.0",
@@ -31,8 +36,7 @@
     "jsonwebtoken": "^9.0.0",
     "mailersend": "^2.4.0",
     "multer": "^1.4.5-lts.2",
-    "multer-s3": "^3.0.1",
-    "newrelic": "^12.18.2"
+    "multer-s3": "^3.0.1"
   },
   "devDependencies": {
     "@types/mime-types": "^2.1.4",

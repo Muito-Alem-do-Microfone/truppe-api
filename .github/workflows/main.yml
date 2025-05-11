@@ -1,8 +1,6 @@
 name: CI/CD Pipeline – Test & Deploy
 
 on:
-  push:
-    branches: [main]
   release:
     types: [published]
   workflow_dispatch:

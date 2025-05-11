@@ -28,6 +28,24 @@ jobs:
     needs: test
 
     steps:
+      - name: 🚀 Notify Discord (Build Started)
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "username": "🚀 Deploy Gerard Way",
+            "embeds": [{
+              "title": "🛠 Build in Progress",
+              "description": "🔄 `bsb-api` is being updated. Grab a coffee ☕ while I work! 🚀",
+              "color": 16776960,
+              "fields": [
+                { "name": "Release", "value": "${{ github.event.release.tag_name || github.ref_name }}", "inline": true },
+                { "name": "Environment", "value": "Production", "inline": true }
+              ]
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -55,11 +73,50 @@ jobs:
           ssh -i id_ed25519 -o StrictHostKeyChecking=no root@${{ secrets.SERVER_HOST }} <<EOF
           rm -rf ~/bsb-api
           mkdir ~/bsb-api
+          apt-get update && apt-get install -y unzip
           unzip -o /root/bsb-api-release.zip -d ~/bsb-api
+          rm /root/bsb-api-release.zip
 
-          cd ~/docker
-          docker-compose pull
-          docker-compose build --no-cache
-          docker-compose up -d bsb-api
+          make rebuild-api
+          make up-api
+
           docker image prune -f
           EOF
+
+      - name: ✅ Notify Discord (Deployment Success)
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "username": "🚀 Deploy Gerard Way",
+            "embeds": [{
+              "title": "✅ Deployment Complete",
+              "description": "✨ `bsb-api` is now live and ready to rock! 🎸🔥",
+              "color": 65280,
+              "fields": [
+                { "name": "Release", "value": "${{ github.event.release.tag_name || github.ref_name }}", "inline": true },
+                { "name": "Environment", "value": "Production", "inline": true }
+              ]
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: ❌ Notify Discord (Deployment Failed)
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "username": "🚨 Deploy Gerard Way",
+            "embeds": [{
+              "title": "❌ Uh-oh! Deployment Failed!",
+              "description": "🚨 Something went wrong updating `bsb-api`. Check GitHub Actions logs for details.",
+              "color": 16711680,
+              "fields": [
+                { "name": "Release", "value": "${{ github.event.release.tag_name || github.ref_name }}", "inline": true },
+                { "name": "Environment", "value": "Production", "inline": true }
+              ]
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}

@@ -16,7 +16,6 @@ model Announcement {
   number      String
   email       String
   type        String
-  stateId     Int
   state       String
   city        String
   description String

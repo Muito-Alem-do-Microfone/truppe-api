@@ -17,14 +17,29 @@ const createAnnouncement = async (req, res) => {
     age,
     about,
     type,
-    genreIds,
     state,
     city,
     description,
-    instrumentIds,
-    socialLinks,
-    tagIds,
   } = req.body;
+
+  const toArray = (val) => {
+    if (!val) return [];
+    return Array.isArray(val) ? val : [val];
+  };
+
+  const socialLinks = [];
+  let i = 0;
+  while (req.body[`socialLinks[${i}][socialMediaId]`]) {
+    socialLinks.push({
+      socialMediaId: req.body[`socialLinks[${i}][socialMediaId]`],
+      url: req.body[`socialLinks[${i}][url]`],
+    });
+    i++;
+  }
+
+  const genreIds = toArray(req.body.genreIds);
+  const instrumentIds = toArray(req.body.instrumentIds);
+  const tagIds = toArray(req.body.tagIds);
 
   if (
     !title ||
@@ -59,23 +74,23 @@ const createAnnouncement = async (req, res) => {
         state,
         city,
         description,
-        age,
+        age: parseInt(age),
         about,
         imageUrl,
         genres: {
-          connect: genreIds.map((genreId) => ({ id: genreId })),
+          connect: genreIds.map((id) => ({ id: parseInt(id) })),
         },
         instruments: {
-          connect: instrumentIds.map((instrumentId) => ({ id: instrumentId })),
+          connect: instrumentIds.map((id) => ({ id: parseInt(id) })),
+        },
+        tags: {
+          connect: tagIds.map((id) => ({ id: parseInt(id) })),
         },
         socialLinks: {
           create: socialLinks.map(({ socialMediaId, url }) => ({
             url,
-            socialMedia: { connect: { id: socialMediaId } },
+            socialMedia: { connect: { id: parseInt(socialMediaId) } },
           })),
-        },
-        tags: {
-          connect: tagIds.map((tagId) => ({ id: tagId })),
         },
       },
       include: {

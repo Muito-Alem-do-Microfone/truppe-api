@@ -5,8 +5,7 @@ import { uploadToS3 } from "../services/s3/imageUpload.js";
 
 const prisma = new PrismaClient();
 
-const webhookURL =
-  "https://discord.com/api/webhooks/1347792793782980772/dd2Fo9sc0W68uTGAj6GAdQEuq4_-x0BEJtVgJK_I2RzSHu_euaEe5HBbGwdpvahH5DY4";
+const webhookURL = process.env.DISCORD_SERVER_WEBOOK;
 
 const createAnnouncement = async (req, res) => {
   const {

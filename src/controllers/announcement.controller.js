@@ -21,6 +21,8 @@ const createAnnouncement = async (req, res) => {
     description,
   } = req.body;
 
+  const parsedAge = parseInt(age, 10);
+
   const toArray = (val) => {
     if (!val) return [];
     return Array.isArray(val) ? val : [val];
@@ -45,7 +47,8 @@ const createAnnouncement = async (req, res) => {
     !name ||
     !number ||
     !email ||
-    !age ||
+    Number.isNaN(parsedAge) ||
+    parsedAge <= 0 ||
     !about ||
     !type ||
     !genreIds ||
@@ -56,7 +59,7 @@ const createAnnouncement = async (req, res) => {
     !tagIds
   ) {
     return res.status(400).send({
-      message: "One or more required fields are missing",
+      message: "One or more required fields are missing or invalid",
     });
   }
 
@@ -73,7 +76,7 @@ const createAnnouncement = async (req, res) => {
         state,
         city,
         description,
-        age: parseInt(age),
+        age: parsedAge,
         about,
         imageUrl,
         genres: {
@@ -198,7 +201,7 @@ const createAnnouncement = async (req, res) => {
 };
 
 const deleteAnnouncement = async (req, res) => {
-  const id = parseInt(req.params.id); // Convert the ID to an integer
+  const id = parseInt(req.params.id);
 
   try {
     const existingAnnouncement = await prisma.announcement.findUnique({

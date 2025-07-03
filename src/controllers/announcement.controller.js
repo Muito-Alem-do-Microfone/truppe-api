@@ -51,12 +51,12 @@ const createAnnouncement = async (req, res) => {
     parsedAge <= 0 ||
     !about ||
     !type ||
-    !genreIds ||
     !state ||
     !city ||
     !description ||
-    !instrumentIds ||
-    !tagIds
+    !genreIds || genreIds.length === 0 ||
+    !instrumentIds || instrumentIds.length === 0 ||
+    !tagIds || tagIds.length === 0
   ) {
     return res.status(400).send({
       message: "One or more required fields are missing or invalid",

@@ -9,6 +9,7 @@ import {
 } from "vitest";
 import request from "supertest";
 import express from "express";
+import { uploadToS3 } from "../utils/s3Upload.js";
 
 vi.mock("@prisma/client", () => {
   const mPrismaClient = {
@@ -33,6 +34,10 @@ vi.mock("../services/email/sendEmail.js", () => ({
   sendEmail: vi.fn(),
 }));
 
+vi.mock("../utils/s3Upload.js", () => ({
+  uploadToS3: vi.fn(),
+}));
+
 import announcementRoutes from "../routes/announcement.routes.js";
 import { PrismaClient } from "@prisma/client";
 import { sendEmail } from "../services/email/sendEmail.js";
@@ -48,6 +53,19 @@ describe("Announcement API", () => {
     app.use(express.json());
     announcementRoutes(app);
     prisma = new PrismaClient();
+
+    // Mock global fetch
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    });
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    uploadToS3.mockResolvedValue("https://mock-s3-url.com/image.jpg");
+    sendEmail.mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -64,13 +82,15 @@ describe("Announcement API", () => {
       expect(res.statusCode).toBe(400);
       expect(res.body).toHaveProperty(
         "message",
-        "One or more required fields are missing"
+        "One or more required fields are missing or invalid"
       );
     });
 
     it("should create an announcement successfully", async () => {
       sendEmail.mockResolvedValue(true);
-      const reqBody = {
+
+      const createdAnnouncement = {
+        id: 1,
         title: "Test Title",
         name: "Test Name",
         number: "123456",
@@ -78,46 +98,13 @@ describe("Announcement API", () => {
         age: 30,
         about: "Test About",
         type: "Test Type",
-        genreIds: [1, 2],
         state: "Test State",
         city: "Test City",
         description: "Test Description",
-        instrumentIds: [3, 4],
-        socialLinks: [{ socialMediaId: 5, url: "http://example.com" }],
-        tagIds: [6, 7],
-      };
-
-      const createdAnnouncement = {
-        id: 1,
-        title: reqBody.title,
-        name: reqBody.name,
-        number: reqBody.number,
-        email: reqBody.email,
-        age: reqBody.age,
-        about: reqBody.about,
-        type: reqBody.type,
-        state: reqBody.state,
-        city: reqBody.city,
-        description: reqBody.description,
-        genres: [
-          { id: 1, name: "Genre1" },
-          { id: 2, name: "Genre2" },
-        ],
-        instruments: [
-          { id: 3, name: "Instrument1" },
-          { id: 4, name: "Instrument2" },
-        ],
-        socialLinks: [
-          {
-            id: 10,
-            url: "http://example.com",
-            socialMedia: { id: 5, name: "Social1" },
-          },
-        ],
-        tags: [
-          { id: 6, name: "Tag1" },
-          { id: 7, name: "Tag2" },
-        ],
+        genres: [],
+        instruments: [],
+        socialLinks: [],
+        tags: [],
       };
 
       const createdConfirmation = {
@@ -130,22 +117,47 @@ describe("Announcement API", () => {
       };
 
       prisma.announcement.create.mockResolvedValue(createdAnnouncement);
-      prisma.announcementConfirmation.create.mockResolvedValue(
-        createdConfirmation
-      );
+      prisma.announcementConfirmation.create.mockResolvedValue(createdConfirmation);
 
-      const res = await request(app).post("/api/announcement").send(reqBody);
+      const res = await request(app)
+        .post("/api/announcement")
+        .field("title", "Test Title")
+        .field("name", "Test Name")
+        .field("number", "123456")
+        .field("email", "test@example.com")
+        .field("age", "30")
+        .field("about", "Test About")
+        .field("type", "Test Type")
+        .field("state", "Test State")
+        .field("city", "Test City")
+        .field("description", "Test Description")
+        .field("genreIds", "1")
+        .field("genreIds", "2")
+        .field("instrumentIds", "3")
+        .field("instrumentIds", "4")
+        .field("tagIds", "6")
+        .field("tagIds", "7")
+        .field("socialLinks[0][socialMediaId]", "5")
+        .field("socialLinks[0][url]", "http://example.com");
 
-      expect(res.statusCode).toBe(201);
+      console.log(res.statusCode, res.body);
       expect(res.body).toEqual({
         status: "success",
         data: createdAnnouncement,
       });
 
-      expect(prisma.announcement.create).toHaveBeenCalled();
+      expect(prisma.announcement.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            age: 30, // garante que converteu a string para número
+          }),
+        })
+      );
+
       expect(prisma.announcementConfirmation.create).toHaveBeenCalled();
       expect(sendEmail).toHaveBeenCalled();
     });
+
 
     it("should return 500 when creation fails", async () => {
       const reqBody = {

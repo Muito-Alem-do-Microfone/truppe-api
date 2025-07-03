@@ -1,6 +1,6 @@
 {
   "name": "bsb-api",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Core API for the BSB platform, providing backend services and data access via REST.",
   "main": "server.js",
   "type": "module",

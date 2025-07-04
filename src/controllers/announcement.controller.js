@@ -440,6 +440,7 @@ const confirmAnnouncement = async (req, res) => {
     return res.status(200).json({
       status: "success",
       message: "Announcement confirmed successfully.",
+      createdAnnouncementId: confirmation.announcementId
     });
   } catch (err) {
     console.error("Erro ao confirmar anúncio:", err);

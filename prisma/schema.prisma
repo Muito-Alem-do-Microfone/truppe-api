@@ -26,8 +26,6 @@ model Announcement {
   genres      Genre[]      @relation("AnnouncementGenres")
   instruments Instrument[] @relation("AnnouncementInstruments")
   tags        Tags[]       @relation("AnnouncementTags")
-  status      AnnouncementStatus @default(PENDING)
-  AnnouncementConfirmation AnnouncementConfirmation?
 }
 
 model Instrument {
@@ -64,22 +62,38 @@ model Tags {
   announcement  Announcement[] @relation("AnnouncementTags")
 }
 
-enum AnnouncementStatus {
-  PENDING
-  CONFIRMED
-}
-
-model AnnouncementConfirmation {
-  id              String       @id @default(cuid())
-  announcement    Announcement @relation(fields: [announcementId], references: [id])
-  announcementId  Int          @unique
-  code            String
-  expiresAt       DateTime
-  confirmedAt     DateTime?
-  createdAt       DateTime     @default(now())
-}
-
 model State {
   id    Int    @id @default(autoincrement())
   name  String @unique
+}
+
+model AppUser {
+  id                Int                    @id @default(autoincrement())
+  email             String                 @unique
+  password          String
+  name              String?
+  surname           String?
+  dateOfBirth       DateTime?
+  country           String?
+  state             String?
+  isEmailConfirmed  Boolean                @default(false)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  confirmations     AppUserConfirmation[]
+}
+
+model AppUserConfirmation {
+  id          String    @id @default(cuid())
+  userId      Int
+  user        AppUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code        String
+  type        ConfirmationType
+  expiresAt   DateTime
+  confirmedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+enum ConfirmationType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
 }

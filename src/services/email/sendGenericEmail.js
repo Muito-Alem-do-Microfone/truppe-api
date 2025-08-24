@@ -1,12 +1,7 @@
 import "dotenv/config";
 import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
-import { getConfirmationEmailHtml } from "./templates/announcementConfirmation.js";
 
-export const sendEmail = async ({
-  recipientEmail,
-  recipientName,
-  confirmationCode,
-}) => {
+export const sendGenericEmail = async ({ to, subject, html, name = "" }) => {
   const mailerSend = new MailerSend({
     apiKey: process.env.MAILERSEND_API,
   });
@@ -16,20 +11,20 @@ export const sendEmail = async ({
     "Muito Além do Microfone"
   );
 
-  const recipients = [new Recipient(recipientEmail, recipientName)];
+  const recipients = [new Recipient(to, name)];
 
   const emailParams = new EmailParams()
     .setFrom(sentFrom)
     .setTo(recipients)
     .setReplyTo(sentFrom)
-    .setSubject("Confirmação de anúncio")
-    .setHtml(getConfirmationEmailHtml(confirmationCode));
+    .setSubject(subject)
+    .setHtml(html);
 
   try {
     await mailerSend.email.send(emailParams);
     return true;
   } catch (error) {
-    console.error(error);
-    return error;
+    console.error("Email sending error:", error);
+    throw error;
   }
 };

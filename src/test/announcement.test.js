@@ -1,412 +1,417 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  afterEach,
-  afterAll,
-  vi,
-} from "vitest";
+import { describe, it, expect, beforeAll, afterEach, vi } from "vitest";
 import request from "supertest";
-import express from "express";
-import { uploadToS3 } from "../utils/s3Upload.js";
+import {
+  createTestApp,
+  setupPrismaMock,
+  getMockPrisma,
+  mockExternalServices,
+  cleanupMocks,
+  testDataFactory,
+  assertHelpers,
+} from "./helpers/testSetup.js";
 
-vi.mock("@prisma/client", () => {
-  const mPrismaClient = {
-    announcement: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      findMany: vi.fn(),
-    },
-    announcementConfirmation: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-      update: vi.fn(),
-    },
-  };
-  return { PrismaClient: vi.fn(() => mPrismaClient) };
-});
-
-// mock:
-vi.mock("../services/email/sendEmail.js", () => ({
-  sendEmail: vi.fn(),
-}));
-
-vi.mock("../utils/s3Upload.js", () => ({
-  uploadToS3: vi.fn(),
-}));
+// Setup Prisma mocking
+setupPrismaMock();
 
 import announcementRoutes from "../routes/announcement.routes.js";
-import { PrismaClient } from "@prisma/client";
-import { sendEmail } from "../services/email/sendEmail.js";
 
 describe("Announcement API", () => {
   let app;
   let prisma;
-  let consoleErrorSpy;
+  let consoleSpy;
 
   beforeAll(() => {
-    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    app = express();
-    app.use(express.json());
+    consoleSpy = mockExternalServices();
+    app = createTestApp();
     announcementRoutes(app);
-    prisma = new PrismaClient();
-
-    // Mock global fetch
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({}),
-    });
-  });
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    uploadToS3.mockResolvedValue("https://mock-s3-url.com/image.jpg");
-    sendEmail.mockResolvedValue(true);
+    prisma = getMockPrisma();
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    cleanupMocks();
   });
 
   afterAll(() => {
-    consoleErrorSpy.mockRestore();
+    cleanupMocks(consoleSpy);
   });
 
   describe("POST /api/announcement", () => {
+    const validAnnouncementData = {
+      title: "Test Announcement",
+      name: "Test User",
+      number: "123456789",
+      email: "test@example.com",
+      age: "25",
+      about: "Test about section",
+      type: "Musician",
+      state: "Test State",
+      city: "Test City",
+      description: "Test description",
+      genreIds: ["1", "2"],
+      instrumentIds: ["1", "2"],
+      tagIds: ["1", "2"],
+    };
+
     it("should return 400 if required fields are missing", async () => {
-      const res = await request(app).post("/api/announcement").send({});
-      expect(res.statusCode).toBe(400);
-      expect(res.body).toHaveProperty(
-        "message",
+      const response = await request(app).post("/api/announcement").send({});
+
+      assertHelpers.expectValidationError(
+        response,
         "One or more required fields are missing or invalid"
       );
     });
 
-    it("should create an announcement successfully", async () => {
-      sendEmail.mockResolvedValue(true);
-
-      const createdAnnouncement = {
-        id: 1,
-        title: "Test Title",
-        name: "Test Name",
-        number: "123456",
-        email: "test@example.com",
-        age: 30,
-        about: "Test About",
-        type: "Test Type",
-        state: "Test State",
-        city: "Test City",
-        description: "Test Description",
-        genres: [],
-        instruments: [],
-        socialLinks: [],
-        tags: [],
-      };
-
-      const createdConfirmation = {
-        id: "conf_123",
-        code: "ABC123",
-        expiresAt: new Date(Date.now() + 30 * 60 * 1000),
-        confirmedAt: null,
-        createdAt: new Date(),
-        announcementId: createdAnnouncement.id,
-      };
-
-      prisma.announcement.create.mockResolvedValue(createdAnnouncement);
-      prisma.announcementConfirmation.create.mockResolvedValue(createdConfirmation);
-
-      const res = await request(app)
+    it("should return 400 if age is invalid", async () => {
+      const invalidData = { ...validAnnouncementData, age: "invalid" };
+      const response = await request(app)
         .post("/api/announcement")
-        .field("title", "Test Title")
-        .field("name", "Test Name")
-        .field("number", "123456")
-        .field("email", "test@example.com")
-        .field("age", "30")
-        .field("about", "Test About")
-        .field("type", "Test Type")
-        .field("state", "Test State")
-        .field("city", "Test City")
-        .field("description", "Test Description")
+        .send(invalidData);
+
+      assertHelpers.expectValidationError(response);
+    });
+
+    it("should return 400 if age is zero or negative", async () => {
+      const invalidData = { ...validAnnouncementData, age: "0" };
+      const response = await request(app)
+        .post("/api/announcement")
+        .send(invalidData);
+
+      assertHelpers.expectValidationError(response);
+    });
+
+    it("should return 400 if arrays are empty", async () => {
+      const invalidData = { ...validAnnouncementData, genreIds: [] };
+      const response = await request(app)
+        .post("/api/announcement")
+        .send(invalidData);
+
+      assertHelpers.expectValidationError(response);
+    });
+
+    it("should create announcement successfully with form data", async () => {
+      const mockAnnouncement = testDataFactory.announcement({
+        genres: [testDataFactory.genre({ id: 1, name: "Rock" })],
+        instruments: [testDataFactory.instrument({ id: 1, name: "Guitar" })],
+        tags: [testDataFactory.tag({ id: 1, name: "Beginner" })],
+        socialLinks: [],
+      });
+
+      prisma.announcement.create.mockResolvedValue(mockAnnouncement);
+
+      const response = await request(app)
+        .post("/api/announcement")
+        .field("title", validAnnouncementData.title)
+        .field("name", validAnnouncementData.name)
+        .field("number", validAnnouncementData.number)
+        .field("email", validAnnouncementData.email)
+        .field("age", validAnnouncementData.age)
+        .field("about", validAnnouncementData.about)
+        .field("type", validAnnouncementData.type)
+        .field("state", validAnnouncementData.state)
+        .field("city", validAnnouncementData.city)
+        .field("description", validAnnouncementData.description)
         .field("genreIds", "1")
         .field("genreIds", "2")
-        .field("instrumentIds", "3")
-        .field("instrumentIds", "4")
-        .field("tagIds", "6")
-        .field("tagIds", "7")
-        .field("socialLinks[0][socialMediaId]", "5")
-        .field("socialLinks[0][url]", "http://example.com");
+        .field("instrumentIds", "1")
+        .field("instrumentIds", "2")
+        .field("tagIds", "1")
+        .field("tagIds", "2")
+        .field("socialLinks[0][socialMediaId]", "1")
+        .field("socialLinks[0][url]", "https://example.com");
 
-      console.log(res.statusCode, res.body);
-      expect(res.body).toEqual({
-        status: "success",
-        data: createdAnnouncement,
+      expect(response.status).toBe(201);
+      expect(response.body.status).toBe("success");
+      expect(response.body.data).toMatchObject({
+        title: mockAnnouncement.title,
+        name: mockAnnouncement.name,
+        age: mockAnnouncement.age,
       });
 
       expect(prisma.announcement.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            age: 30, // garante que converteu a string para número
+            age: 25, // Ensure string was converted to number
+            title: validAnnouncementData.title,
+            name: validAnnouncementData.name,
           }),
         })
       );
-
-      expect(prisma.announcementConfirmation.create).toHaveBeenCalled();
-      expect(sendEmail).toHaveBeenCalled();
     });
 
-
-    it("should return 500 when creation fails", async () => {
-      const reqBody = {
-        title: "Test Title",
-        name: "Test Name",
-        number: "123456",
-        email: "test@example.com",
-        age: 30,
-        about: "Test About",
-        type: "Test Type",
-        genreIds: [1, 2],
-        state: "Test State",
-        city: "Test City",
-        description: "Test Description",
-        instrumentIds: [3, 4],
-        socialLinks: [{ socialMediaId: 5, url: "http://example.com" }],
-        tagIds: [6, 7],
-      };
-      prisma.announcement.create.mockRejectedValue(new Error("Creation error"));
-      const res = await request(app).post("/api/announcement").send(reqBody);
-      expect(res.statusCode).toBe(500);
-      expect(res.body).toEqual({
-        status: "error",
-        message: "An error occurred while creating the announcement.",
+    it("should create announcement successfully with image upload", async () => {
+      const mockAnnouncement = testDataFactory.announcement({
+        imageUrl: "https://mock-s3-url.com/image.jpg",
       });
-    });
-  });
 
-  describe("DELETE /api/announcement/:id", () => {
-    it("should return 404 if announcement not found", async () => {
-      prisma.announcement.findUnique.mockResolvedValue(null);
-      const res = await request(app).delete("/api/announcement/1");
-      expect(res.statusCode).toBe(404);
-      expect(res.body).toEqual({ message: "Announcement not found" });
-    });
+      prisma.announcement.create.mockResolvedValue(mockAnnouncement);
 
-    it("should delete announcement successfully", async () => {
-      prisma.announcement.findUnique.mockResolvedValue({ id: 1 });
-      prisma.announcement.delete.mockResolvedValue({});
-      const res = await request(app).delete("/api/announcement/1");
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toEqual({
-        message: "Announcement deleted successfully.",
-      });
-    });
+      const response = await request(app)
+        .post("/api/announcement")
+        .field("title", validAnnouncementData.title)
+        .field("name", validAnnouncementData.name)
+        .field("number", validAnnouncementData.number)
+        .field("email", validAnnouncementData.email)
+        .field("age", validAnnouncementData.age)
+        .field("about", validAnnouncementData.about)
+        .field("type", validAnnouncementData.type)
+        .field("state", validAnnouncementData.state)
+        .field("city", validAnnouncementData.city)
+        .field("description", validAnnouncementData.description)
+        .field("genreIds", "1")
+        .field("instrumentIds", "1")
+        .field("tagIds", "1")
+        .attach("image", Buffer.from("fake image"), "test.jpg");
 
-    it("should return 500 when deletion fails", async () => {
-      prisma.announcement.findUnique.mockResolvedValue({ id: 1 });
-      prisma.announcement.delete.mockRejectedValue(new Error("Deletion error"));
-      const res = await request(app).delete("/api/announcement/1");
-      expect(res.statusCode).toBe(500);
-      expect(res.body).toEqual({ message: "Deletion error" });
-    });
-  });
-
-  describe("PUT /api/announcement/:id", () => {
-    it("should return 400 if required fields are missing", async () => {
-      const res = await request(app).put("/api/announcement/1").send({});
-      expect(res.statusCode).toBe(400);
-      expect(res.body).toHaveProperty("message");
-      expect(res.body.message).toMatch(
-        /One or more required fields are missing/
+      expect(response.status).toBe(201);
+      expect(response.body.data.imageUrl).toBe(
+        "https://mock-s3-url.com/image.jpg"
       );
     });
 
-    it("should return 404 if announcement not found", async () => {
-      const reqBody = {
-        title: "Updated Title",
-        name: "Updated Name",
-        number: "654321",
-        email: "updated@example.com",
-        age: 35,
-        about: "Updated About",
-        type: "Updated Type",
-        genreIds: [1, 2],
-        state: "Updated State",
-        city: "Updated City",
-        description: "Updated Description",
-        instrumentIds: [3, 4],
-        socialLinks: [{ socialMediaId: 5, url: "http://updated.com" }],
-        tagIds: [6, 7],
-      };
-      prisma.announcement.findUnique.mockResolvedValue(null);
-      const res = await request(app).put("/api/announcement/1").send(reqBody);
-      expect(res.statusCode).toBe(404);
-      expect(res.body).toEqual({ message: "Announcement not found" });
+    it("should handle Discord webhook failure gracefully", async () => {
+      const mockAnnouncement = testDataFactory.announcement();
+      prisma.announcement.create.mockResolvedValue(mockAnnouncement);
+
+      // Mock fetch to fail
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        text: async () => "Discord webhook failed",
+      });
+
+      const response = await request(app)
+        .post("/api/announcement")
+        .send(validAnnouncementData);
+
+      // Should still succeed even if Discord webhook fails
+      expect(response.status).toBe(201);
+      expect(response.body.status).toBe("success");
     });
 
-    it("should update announcement successfully", async () => {
-      const reqBody = {
-        title: "Updated Title",
-        name: "Updated Name",
-        number: "654321",
-        email: "updated@example.com",
-        age: 35,
-        about: "Updated About",
-        type: "Updated Type",
-        genreIds: [1, 2],
-        state: "Updated State",
-        city: "Updated City",
-        description: "Updated Description",
-        instrumentIds: [3, 4],
-        socialLinks: [{ socialMediaId: 5, url: "http://updated.com" }],
-        tagIds: [6, 7],
-      };
-      const updatedAnnouncement = {
-        id: 1,
-        ...reqBody,
-        genres: [
-          { id: 1, name: "Genre1" },
-          { id: 2, name: "Genre2" },
-        ],
-        instruments: [
-          { id: 3, name: "Instrument1" },
-          { id: 4, name: "Instrument2" },
-        ],
-        socialLinks: [
-          {
-            id: 10,
-            url: "http://updated.com",
-            socialMedia: { id: 5, name: "Social1" },
-          },
-        ],
-        tags: [
-          { id: 6, name: "Tag1" },
-          { id: 7, name: "Tag2" },
-        ],
-      };
-      prisma.announcement.findUnique.mockResolvedValue({ id: 1 });
-      prisma.announcement.update.mockResolvedValue(updatedAnnouncement);
-      const res = await request(app).put("/api/announcement/1").send(reqBody);
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toEqual({
-        status: "success",
-        data: updatedAnnouncement,
-      });
-    });
+    it("should return 500 when database creation fails", async () => {
+      prisma.announcement.create.mockRejectedValue(new Error("Database error"));
 
-    it("should return 500 when update fails", async () => {
-      const reqBody = {
-        title: "Updated Title",
-        name: "Updated Name",
-        number: "654321",
-        email: "updated@example.com",
-        age: 35,
-        about: "Updated About",
-        type: "Updated Type",
-        genreIds: [1, 2],
-        state: "Updated State",
-        city: "Updated City",
-        description: "Updated Description",
-        instrumentIds: [3, 4],
-        socialLinks: [{ socialMediaId: 5, url: "http://updated.com" }],
-        tagIds: [6, 7],
-      };
-      prisma.announcement.findUnique.mockResolvedValue({ id: 1 });
-      prisma.announcement.update.mockRejectedValue(new Error("Update error"));
-      const res = await request(app).put("/api/announcement/1").send(reqBody);
-      expect(res.statusCode).toBe(500);
-      expect(res.body).toEqual({
-        status: "error",
-        message: "An error occurred while updating the announcement.",
-      });
+      const response = await request(app)
+        .post("/api/announcement")
+        .send(validAnnouncementData);
+
+      assertHelpers.expectServerError(response);
+      expect(response.body.message).toContain("error occurred while creating");
     });
   });
 
   describe("GET /api/announcement", () => {
-    it("should return a list of announcements with sensitive fields removed", async () => {
-      const announcementsList = [
-        {
+    it("should return list of announcements with sensitive data removed", async () => {
+      const mockAnnouncements = [
+        testDataFactory.announcement({
           id: 1,
-          about: "secret",
-          email: "secret@example.com",
-          number: "123",
-          other: "value",
-        },
-        {
+          about: "sensitive info",
+          email: "sensitive@email.com",
+          number: "123456789",
+        }),
+        testDataFactory.announcement({
           id: 2,
-          about: "hidden",
-          email: "hidden@example.com",
-          number: "456",
-          other: "value2",
-        },
+          about: "another sensitive info",
+          email: "another@email.com",
+          number: "987654321",
+        }),
       ];
-      prisma.announcement.findMany.mockResolvedValue(announcementsList);
-      const res = await request(app).get("/api/announcement");
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toEqual([
-        { id: 1, other: "value" },
-        { id: 2, other: "value2" },
-      ]);
+
+      prisma.announcement.findMany.mockResolvedValue(mockAnnouncements);
+
+      const response = await request(app).get("/api/announcement");
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+
+      // Check that sensitive fields are removed
+      response.body.forEach((announcement) => {
+        expect(announcement).not.toHaveProperty("about");
+        expect(announcement).not.toHaveProperty("email");
+        expect(announcement).not.toHaveProperty("number");
+      });
     });
 
-    it("should return 500 when retrieval fails", async () => {
+    it("should return 500 when database query fails", async () => {
       prisma.announcement.findMany.mockRejectedValue(
-        new Error("Retrieval error")
+        new Error("Database error")
       );
-      const res = await request(app).get("/api/announcement");
-      expect(res.statusCode).toBe(500);
-      expect(res.body).toEqual({ message: "Retrieval error" });
+
+      const response = await request(app).get("/api/announcement");
+
+      assertHelpers.expectServerError(response);
     });
   });
 
   describe("GET /api/announcement/:id", () => {
     it("should return 404 if announcement not found", async () => {
       prisma.announcement.findUnique.mockResolvedValue(null);
-      const res = await request(app).get("/api/announcement/1");
-      expect(res.statusCode).toBe(404);
-      expect(res.body).toEqual({ message: "Announcement not found" });
+
+      const response = await request(app).get("/api/announcement/999");
+
+      assertHelpers.expectNotFound(response, "Announcement not found");
     });
 
-    it("should return announcement with mapped socialLinks", async () => {
-      const announcement = {
-        id: 1,
-        title: "Test Title",
+    it("should return announcement with properly mapped social links", async () => {
+      const mockAnnouncement = testDataFactory.announcement({
         socialLinks: [
           {
-            id: 10,
-            url: "http://example.com",
-            socialMedia: { id: 5, name: "Social1" },
+            id: 1,
+            url: "https://facebook.com/test",
+            socialMedia: { id: 1, name: "Facebook" },
           },
-        ],
-        genres: [],
-        instruments: [],
-        tags: [],
-      };
-      prisma.announcement.findUnique.mockResolvedValue(announcement);
-      const res = await request(app).get("/api/announcement/1");
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toEqual({
-        ...announcement,
-        socialLinks: [
           {
-            id: 10,
-            url: "http://example.com",
-            socialMediaId: 5,
-            socialMediaName: "Social1",
+            id: 2,
+            url: "https://instagram.com/test",
+            socialMedia: { id: 2, name: "Instagram" },
           },
         ],
       });
+
+      prisma.announcement.findUnique.mockResolvedValue(mockAnnouncement);
+
+      const response = await request(app).get("/api/announcement/1");
+
+      expect(response.status).toBe(200);
+      expect(response.body.socialLinks).toEqual([
+        {
+          id: 1,
+          url: "https://facebook.com/test",
+          socialMediaId: 1,
+          socialMediaName: "Facebook",
+        },
+        {
+          id: 2,
+          url: "https://instagram.com/test",
+          socialMediaId: 2,
+          socialMediaName: "Instagram",
+        },
+      ]);
     });
 
-    it("should return 500 when retrieval fails", async () => {
+    it("should return 500 when database query fails", async () => {
       prisma.announcement.findUnique.mockRejectedValue(
-        new Error("Retrieval error")
+        new Error("Database error")
       );
-      const res = await request(app).get("/api/announcement/1");
-      expect(res.statusCode).toBe(500);
-      expect(res.body).toEqual({ message: "Retrieval error" });
+
+      const response = await request(app).get("/api/announcement/1");
+
+      assertHelpers.expectServerError(response);
+    });
+  });
+
+  describe("PUT /api/announcement/:id", () => {
+    const validUpdateData = {
+      title: "Updated Title",
+      name: "Updated Name",
+      number: "987654321",
+      email: "updated@example.com",
+      age: 30,
+      about: "Updated about",
+      type: "Updated Type",
+      genreIds: [1, 2],
+      state: "Updated State",
+      city: "Updated City",
+      description: "Updated description",
+      instrumentIds: [1, 2],
+      socialLinks: [{ socialMediaId: 1, url: "https://updated.com" }],
+      tagIds: [1, 2],
+    };
+
+    it("should return 400 if required fields are missing", async () => {
+      const response = await request(app).put("/api/announcement/1").send({});
+
+      assertHelpers.expectValidationError(
+        response,
+        "required fields are missing"
+      );
+    });
+
+    it("should return 404 if announcement not found", async () => {
+      prisma.announcement.findUnique.mockResolvedValue(null);
+
+      const response = await request(app)
+        .put("/api/announcement/999")
+        .send(validUpdateData);
+
+      assertHelpers.expectNotFound(response, "Announcement not found");
+    });
+
+    it("should update announcement successfully", async () => {
+      const existingAnnouncement = testDataFactory.announcement();
+      const updatedAnnouncement = testDataFactory.announcement(validUpdateData);
+
+      prisma.announcement.findUnique.mockResolvedValue(existingAnnouncement);
+      prisma.announcement.update.mockResolvedValue(updatedAnnouncement);
+
+      const response = await request(app)
+        .put("/api/announcement/1")
+        .send(validUpdateData);
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe("success");
+      expect(response.body.data).toMatchObject({
+        title: validUpdateData.title,
+        name: validUpdateData.name,
+        age: validUpdateData.age,
+      });
+
+      expect(prisma.announcement.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 1 },
+          data: expect.objectContaining({
+            title: validUpdateData.title,
+            name: validUpdateData.name,
+          }),
+        })
+      );
+    });
+
+    it("should return 500 when update fails", async () => {
+      const existingAnnouncement = testDataFactory.announcement();
+      prisma.announcement.findUnique.mockResolvedValue(existingAnnouncement);
+      prisma.announcement.update.mockRejectedValue(new Error("Update error"));
+
+      const response = await request(app)
+        .put("/api/announcement/1")
+        .send(validUpdateData);
+
+      assertHelpers.expectServerError(response);
+      expect(response.body.message).toContain("error occurred while updating");
+    });
+  });
+
+  describe("DELETE /api/announcement/:id", () => {
+    it("should return 404 if announcement not found", async () => {
+      prisma.announcement.findUnique.mockResolvedValue(null);
+
+      const response = await request(app).delete("/api/announcement/999");
+
+      assertHelpers.expectNotFound(response, "Announcement not found");
+    });
+
+    it("should delete announcement successfully", async () => {
+      const existingAnnouncement = testDataFactory.announcement();
+      prisma.announcement.findUnique.mockResolvedValue(existingAnnouncement);
+      prisma.announcement.delete.mockResolvedValue({});
+
+      const response = await request(app).delete("/api/announcement/1");
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe("Announcement deleted successfully.");
+
+      expect(prisma.announcement.delete).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+    });
+
+    it("should return 500 when deletion fails", async () => {
+      const existingAnnouncement = testDataFactory.announcement();
+      prisma.announcement.findUnique.mockResolvedValue(existingAnnouncement);
+      prisma.announcement.delete.mockRejectedValue(new Error("Deletion error"));
+
+      const response = await request(app).delete("/api/announcement/1");
+
+      assertHelpers.expectServerError(response);
     });
   });
 });

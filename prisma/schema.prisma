@@ -19,6 +19,8 @@ model Announcement {
   state       String
   city        String
   description String
+  userId      Int
+  user        AppUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   imageUrl    String?
@@ -80,6 +82,7 @@ model AppUser {
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
   confirmations     AppUserConfirmation[]
+  announcements     Announcement[]
 }
 
 model AppUserConfirmation {

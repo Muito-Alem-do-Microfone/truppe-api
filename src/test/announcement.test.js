@@ -47,6 +47,7 @@ describe("Announcement API", () => {
       state: "Test State",
       city: "Test City",
       description: "Test description",
+      userId: "1",
       genreIds: ["1", "2"],
       instrumentIds: ["1", "2"],
       tagIds: ["1", "2"],
@@ -88,7 +89,30 @@ describe("Announcement API", () => {
       assertHelpers.expectValidationError(response);
     });
 
+    it("should return 400 if userId is missing", async () => {
+      const invalidData = { ...validAnnouncementData };
+      delete invalidData.userId;
+      const response = await request(app)
+        .post("/api/announcement")
+        .send(invalidData);
+
+      assertHelpers.expectValidationError(response);
+    });
+
+    it("should return 404 if user does not exist", async () => {
+      prisma.appUser.findUnique.mockResolvedValue(null);
+
+      const response = await request(app)
+        .post("/api/announcement")
+        .send(validAnnouncementData);
+
+      expect(response.status).toBe(404);
+      expect(response.body.status).toBe("error");
+      expect(response.body.message).toBe("User not found");
+    });
+
     it("should create announcement successfully with form data", async () => {
+      const mockUser = testDataFactory.appUser({ id: 1 });
       const mockAnnouncement = testDataFactory.announcement({
         genres: [testDataFactory.genre({ id: 1, name: "Rock" })],
         instruments: [testDataFactory.instrument({ id: 1, name: "Guitar" })],
@@ -96,6 +120,7 @@ describe("Announcement API", () => {
         socialLinks: [],
       });
 
+      prisma.appUser.findUnique.mockResolvedValue(mockUser);
       prisma.announcement.create.mockResolvedValue(mockAnnouncement);
 
       const response = await request(app)
@@ -110,6 +135,7 @@ describe("Announcement API", () => {
         .field("state", validAnnouncementData.state)
         .field("city", validAnnouncementData.city)
         .field("description", validAnnouncementData.description)
+        .field("userId", validAnnouncementData.userId)
         .field("genreIds", "1")
         .field("genreIds", "2")
         .field("instrumentIds", "1")
@@ -139,10 +165,12 @@ describe("Announcement API", () => {
     });
 
     it("should create announcement successfully with image upload", async () => {
+      const mockUser = testDataFactory.appUser({ id: 1 });
       const mockAnnouncement = testDataFactory.announcement({
         imageUrl: "https://mock-s3-url.com/image.jpg",
       });
 
+      prisma.appUser.findUnique.mockResolvedValue(mockUser);
       prisma.announcement.create.mockResolvedValue(mockAnnouncement);
 
       const response = await request(app)
@@ -157,6 +185,7 @@ describe("Announcement API", () => {
         .field("state", validAnnouncementData.state)
         .field("city", validAnnouncementData.city)
         .field("description", validAnnouncementData.description)
+        .field("userId", validAnnouncementData.userId)
         .field("genreIds", "1")
         .field("instrumentIds", "1")
         .field("tagIds", "1")
@@ -169,7 +198,10 @@ describe("Announcement API", () => {
     });
 
     it("should handle Discord webhook failure gracefully", async () => {
+      const mockUser = testDataFactory.appUser({ id: 1 });
       const mockAnnouncement = testDataFactory.announcement();
+
+      prisma.appUser.findUnique.mockResolvedValue(mockUser);
       prisma.announcement.create.mockResolvedValue(mockAnnouncement);
 
       // Mock fetch to fail
@@ -188,6 +220,9 @@ describe("Announcement API", () => {
     });
 
     it("should return 500 when database creation fails", async () => {
+      const mockUser = testDataFactory.appUser({ id: 1 });
+
+      prisma.appUser.findUnique.mockResolvedValue(mockUser);
       prisma.announcement.create.mockRejectedValue(new Error("Database error"));
 
       const response = await request(app)

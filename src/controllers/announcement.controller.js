@@ -17,6 +17,7 @@ const createAnnouncement = async (req, res) => {
     state,
     city,
     description,
+    userId,
   } = req.body;
 
   const parsedAge = parseInt(age, 10);
@@ -52,6 +53,7 @@ const createAnnouncement = async (req, res) => {
     !state ||
     !city ||
     !description ||
+    !userId ||
     !genreIds ||
     genreIds.length === 0 ||
     !instrumentIds ||
@@ -65,6 +67,18 @@ const createAnnouncement = async (req, res) => {
   }
 
   try {
+    // Validate that the user exists
+    const user = await prisma.appUser.findUnique({
+      where: { id: parseInt(userId) },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
     const imageUrl = req.file ? await uploadToS3(req.file) : null;
 
     const announcement = await prisma.announcement.create({
@@ -80,6 +94,7 @@ const createAnnouncement = async (req, res) => {
         age: parsedAge,
         about,
         imageUrl,
+        userId: parseInt(userId),
         genres: {
           connect: genreIds.map((id) => ({ id: parseInt(id) })),
         },
@@ -101,6 +116,13 @@ const createAnnouncement = async (req, res) => {
         instruments: true,
         socialLinks: { include: { socialMedia: true } },
         tags: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 

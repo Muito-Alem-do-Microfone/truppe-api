@@ -33,3 +33,5 @@ Thumbs.db
 # Optional: zip/tar/archives
 *.zip
 *.tar.gz
+
+docker-compose.yml

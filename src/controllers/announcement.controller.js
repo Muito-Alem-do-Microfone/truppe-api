@@ -1,6 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { createConfirmationCode } from "../utils/index.js";
-import { sendEmail } from "../services/email/sendEmail.js";
 import { uploadToS3 } from "../services/s3/imageUpload.js";
 
 const prisma = new PrismaClient();
@@ -19,6 +17,7 @@ const createAnnouncement = async (req, res) => {
     state,
     city,
     description,
+    userId,
   } = req.body;
 
   const parsedAge = parseInt(age, 10);
@@ -54,9 +53,13 @@ const createAnnouncement = async (req, res) => {
     !state ||
     !city ||
     !description ||
-    !genreIds || genreIds.length === 0 ||
-    !instrumentIds || instrumentIds.length === 0 ||
-    !tagIds || tagIds.length === 0
+    !userId ||
+    !genreIds ||
+    genreIds.length === 0 ||
+    !instrumentIds ||
+    instrumentIds.length === 0 ||
+    !tagIds ||
+    tagIds.length === 0
   ) {
     return res.status(400).send({
       message: "One or more required fields are missing or invalid",
@@ -64,6 +67,18 @@ const createAnnouncement = async (req, res) => {
   }
 
   try {
+    // Validate that the user exists
+    const user = await prisma.appUser.findUnique({
+      where: { id: parseInt(userId) },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
     const imageUrl = req.file ? await uploadToS3(req.file) : null;
 
     const announcement = await prisma.announcement.create({
@@ -79,6 +94,7 @@ const createAnnouncement = async (req, res) => {
         age: parsedAge,
         about,
         imageUrl,
+        userId: parseInt(userId),
         genres: {
           connect: genreIds.map((id) => ({ id: parseInt(id) })),
         },
@@ -100,31 +116,15 @@ const createAnnouncement = async (req, res) => {
         instruments: true,
         socialLinks: { include: { socialMedia: true } },
         tags: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
-
-    const { confirmationCode, codeExpiration } = createConfirmationCode();
-
-    await prisma.announcementConfirmation.create({
-      data: {
-        code: confirmationCode,
-        expiresAt: codeExpiration,
-        announcementId: announcement.id,
-      },
-    });
-
-    const emailStatus = await sendEmail({
-      recipientEmail: email,
-      recipientName: name,
-      confirmationCode,
-    });
-
-    if (!emailStatus) {
-      return res.status(500).json({
-        status: "error",
-        message: "An error occurred while sending the confirmation email.",
-      });
-    }
 
     const discordPayload = {
       username: "Muito Além do Microfone -- Busque sua banda 🎵",
@@ -393,69 +393,10 @@ const getAnnouncementById = async (req, res) => {
   }
 };
 
-const confirmAnnouncement = async (req, res) => {
-  const { code, email } = req.body;
-
-  if (!code || !email) {
-    return res.status(400).json({
-      status: "error",
-      message: "Both code and email are required.",
-    });
-  }
-
-  try {
-    const confirmation = await prisma.announcementConfirmation.findFirst({
-      where: {
-        code,
-        confirmedAt: null,
-        expiresAt: { gte: new Date() },
-        announcement: {
-          email,
-        },
-      },
-      include: {
-        announcement: true,
-      },
-    });
-
-    if (!confirmation) {
-      return res.status(404).json({
-        status: "error",
-        message:
-          "Confirmation failed. Please check your email and confirmation code.",
-      });
-    }
-
-    await prisma.$transaction([
-      prisma.announcement.update({
-        where: { id: confirmation.announcementId },
-        data: { status: "CONFIRMED" },
-      }),
-      prisma.announcementConfirmation.update({
-        where: { id: confirmation.id },
-        data: { confirmedAt: new Date() },
-      }),
-    ]);
-
-    return res.status(200).json({
-      status: "success",
-      message: "Announcement confirmed successfully.",
-      createdAnnouncementId: confirmation.announcementId
-    });
-  } catch (err) {
-    console.error("Erro ao confirmar anúncio:", err);
-    return res.status(500).json({
-      status: "error",
-      message: "Error confirming announcement.",
-    });
-  }
-};
-
 export const announcementController = {
   createAnnouncement,
   deleteAnnouncement,
   updateAnnouncement,
   getAnnouncements,
   getAnnouncementById,
-  confirmAnnouncement,
 };

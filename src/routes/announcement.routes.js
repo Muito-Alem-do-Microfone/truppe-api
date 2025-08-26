@@ -8,7 +8,6 @@ const {
   updateAnnouncement,
   getAnnouncements,
   getAnnouncementById,
-  confirmAnnouncement,
 } = announcementController;
 
 const router = express.Router();
@@ -19,7 +18,6 @@ export default (app) => {
   router.put("/:id", updateAnnouncement);
   router.get("/", getAnnouncements);
   router.get("/:id", getAnnouncementById);
-  router.post("/confirm", confirmAnnouncement);
 
   app.use("/api/announcement", router);
 };

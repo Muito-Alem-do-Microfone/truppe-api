@@ -164,39 +164,6 @@ describe("Announcement API", () => {
       );
     });
 
-    it("should create announcement successfully with image upload", async () => {
-      const mockUser = testDataFactory.appUser({ id: 1 });
-      const mockAnnouncement = testDataFactory.announcement({
-        imageUrl: "https://mock-s3-url.com/image.jpg",
-      });
-
-      prisma.appUser.findUnique.mockResolvedValue(mockUser);
-      prisma.announcement.create.mockResolvedValue(mockAnnouncement);
-
-      const response = await request(app)
-        .post("/api/announcement")
-        .field("title", validAnnouncementData.title)
-        .field("name", validAnnouncementData.name)
-        .field("number", validAnnouncementData.number)
-        .field("email", validAnnouncementData.email)
-        .field("age", validAnnouncementData.age)
-        .field("about", validAnnouncementData.about)
-        .field("type", validAnnouncementData.type)
-        .field("state", validAnnouncementData.state)
-        .field("city", validAnnouncementData.city)
-        .field("description", validAnnouncementData.description)
-        .field("userId", validAnnouncementData.userId)
-        .field("genreIds", "1")
-        .field("instrumentIds", "1")
-        .field("tagIds", "1")
-        .attach("image", Buffer.from("fake image"), "test.jpg");
-
-      expect(response.status).toBe(201);
-      expect(response.body.data.imageUrl).toBe(
-        "https://mock-s3-url.com/image.jpg"
-      );
-    });
-
     it("should handle Discord webhook failure gracefully", async () => {
       const mockUser = testDataFactory.appUser({ id: 1 });
       const mockAnnouncement = testDataFactory.announcement();

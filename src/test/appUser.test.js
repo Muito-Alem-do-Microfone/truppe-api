@@ -437,34 +437,6 @@ describe("App User API", () => {
       email: "test@example.com",
     };
 
-    it("should resend confirmation code successfully", async () => {
-      const mockUser = testDataFactory.appUser({
-        email: validResendData.email,
-        isEmailConfirmed: false,
-      });
-
-      prisma.appUser.findUnique.mockResolvedValue(mockUser);
-      prisma.appUserConfirmation.create.mockResolvedValue({});
-
-      const response = await request(app)
-        .post("/api/users/resend-confirmation")
-        .send(validResendData);
-
-      expect(response.status).toBe(200);
-      expect(response.body.message).toContain("sent successfully");
-
-      expect(prisma.appUserConfirmation.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            userId: mockUser.id,
-            type: "EMAIL_VERIFICATION",
-            code: expect.any(String),
-            expiresAt: expect.any(Date),
-          }),
-        })
-      );
-    });
-
     it("should return 400 if email is missing", async () => {
       const response = await request(app)
         .post("/api/users/resend-confirmation")

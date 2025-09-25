@@ -67,7 +67,6 @@ const createAnnouncement = async (req, res) => {
   }
 
   try {
-    // Validate that the user exists
     const user = await prisma.appUser.findUnique({
       where: { id: parseInt(userId) },
     });

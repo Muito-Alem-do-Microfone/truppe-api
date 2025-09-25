@@ -24,10 +24,8 @@ app.use(json());
 app.use(urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Initialize Prisma Client
 const prisma = new PrismaClient();
 
-// Use routes
 announcementRoutes(app);
 instrumentRoutes(app);
 genreRoutes(app);
@@ -46,7 +44,6 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
 
-// Optionally handle cleanup on server termination
 process.on("SIGINT", async () => {
   await prisma.$disconnect();
   console.log("Prisma Client disconnected.");

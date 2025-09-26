@@ -80,16 +80,10 @@ const instrumentsSeed = async (prisma) => {
     { name: "Voz", type: "Voz" },
   ];
 
-  await Promise.all(instruments.map((instrument) =>
-    prisma.instrument.upsert({
-      where: { name: instrument.name },
-      update: {},
-      create: {
-        name: instrument.name,
-        type: instrument.type,
-      },
-    })
-  ));
+  await prisma.instrument.createMany({
+    data: instruments,
+    skipDuplicates: true,
+  });
 
   console.log("✅ Instruments seeded successfully!");
   

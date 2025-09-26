@@ -16,13 +16,10 @@ const socialMediaSeed = async (prisma) => {
     { name: "Deezer" },
   ];
 
-  await Promise.all(socialMediaPlatforms.map((platform) =>
-    prisma.socialMedia.upsert({
-      where: { name: platform.name },
-      update: {},
-      create: platform,
-    })
-  ))
+  await prisma.socialMedia.createMany({
+    data: socialMediaPlatforms,
+    skipDuplicates: true,
+  });
 
   console.log("✅ Social Media platforms seeded successfully!");
 };

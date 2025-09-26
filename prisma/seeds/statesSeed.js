@@ -1,42 +1,38 @@
 const statesSeed = async (prisma) => {
   const states = [
-    "Acre",
-    "Alagoas",
-    "Amapá",
-    "Amazonas",
-    "Bahia",
-    "Ceará",
-    "Espírito Santo",
-    "Goiás",
-    "Maranhão",
-    "Mato Grosso",
-    "Mato Grosso do Sul",
-    "Minas Gerais",
-    "Pará",
-    "Paraíba",
-    "Paraná",
-    "Pernambuco",
-    "Piauí",
-    "Rio de Janeiro",
-    "Rio Grande do Norte",
-    "Rio Grande do Sul",
-    "Rondônia",
-    "Roraima",
-    "Santa Catarina",
-    "São Paulo",
-    "Sergipe",
-    "Tocantins",
-    "Distrito Federal",
+    { name: "Acre" },
+    { name: "Alagoas" },
+    { name: "Amapá" },
+    { name: "Amazonas" },
+    { name: "Bahia" },
+    { name: "Ceará" },
+    { name: "Espírito Santo" },
+    { name: "Goiás" },
+    { name: "Maranhão" },
+    { name: "Mato Grosso" },
+    { name: "Mato Grosso do Sul" },
+    { name: "Minas Gerais" },
+    { name: "Pará" },
+    { name: "Paraíba" },
+    { name: "Paraná" },
+    { name: "Pernambuco" },
+    { name: "Piauí" },
+    { name: "Rio de Janeiro" },
+    { name: "Rio Grande do Norte" },
+    { name: "Rio Grande do Sul" },
+    { name: "Rondônia" },
+    { name: "Roraima" },
+    { name: "Santa Catarina" },
+    { name: "São Paulo" },
+    { name: "Sergipe" },
+    { name: "Tocantins" },
+    { name: "Distrito Federal" },
   ];
 
-
-  await Promise.all(states.map((name) =>
-    prisma.state.upsert({
-      where: { name },
-      update: {},
-      create: { name },
-    })
-  ));
+  await prisma.state.createMany({
+    data: states,
+    skipDuplicates: true,
+  });
 
   console.log("✅ States seeded successfully!");
 };

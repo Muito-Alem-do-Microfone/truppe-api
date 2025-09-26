@@ -30,13 +30,10 @@ const tagsSeed = async () => {
     { name: "Tem instrumentos" },
   ];
 
-  await Promise.all(tags.map((tag) =>
-    prisma.tags.upsert({
-      where: { name: tag.name },
-      update: {},
-      create: tag,
-    })
-  ))
+  await prisma.tags.createMany({
+    data: tags,
+    skipDuplicates: true,
+  });
   
   console.log("✅ Tags seeded successfully!");
 };

@@ -40,8 +40,9 @@ jobs:
         run: |
           ssh -T -i id_ed25519 -o StrictHostKeyChecking=no madm@${{ secrets.SERVER_HOST }} << 'EOF'
           cd dev/truppe-api
+          git fetch --all --tags
+          git reset --hard
           git checkout ${{ github.event.release.tag_name }}
-          git pull origin ${{ github.event.release.tag_name }}
 
           cd ~
           cd docker

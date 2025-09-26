@@ -14,12 +14,9 @@ RUN npm install --omit=dev
 # Copy the rest of the application files
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
-
 # Expose the API port
 EXPOSE 3000
 
 # Command to run the application
-CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run prisma:seed && npm start"]
 

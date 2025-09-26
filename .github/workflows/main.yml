@@ -39,13 +39,14 @@ jobs:
       - name: 🚀 Deploy via SSH
         run: |
           ssh -i id_ed25519 -o StrictHostKeyChecking=no root@${{ secrets.SERVER_HOST }} << 'EOF'
-          cd ~/dev/truppe-api
+          cd dev/truppe-api
           git checkout ${{ github.event.release.tag_name }}
           git pull origin ${{ github.event.release.tag_name }}
 
-          cd ~/docker
-          docker compose -f ~/docker/docker-compose.truppe-api.yml build truppe_api
-          docker compose -f ~/docker/docker-compose.truppe-api.yml up -d truppe_api
+          cd ~
+          cd docker
+          docker compose -f docker-compose.truppe-api.yml build truppe_api
+          docker compose -f docker-compose.truppe-api.yml up -d truppe_api
 
           docker image prune -f
           EOF

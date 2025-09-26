@@ -28,6 +28,7 @@ const tagsSeed = async () => {
     { name: "Estilo único" },
     { name: "Tem estúdio" },
     { name: "Tem instrumentos" },
+    { name: "Direção de show"}
   ];
 
   await prisma.tags.createMany({

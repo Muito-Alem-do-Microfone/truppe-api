@@ -1,4 +1,4 @@
-name: CI/CD Pipeline – Test & Deploy
+name: CD Pipeline – Deploy
 
 on:
   release:
@@ -6,37 +6,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    name: ✅ Run Tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: 📦 Install Dependencies
-        run: npm install
-        env:
-          SKIP_HUSKY: true
-
-      - name: 🧪 Run Tests
-        run: npm run test
-
   deploy:
     name: 🚀 Deploy to Server
     runs-on: ubuntu-latest
-    needs: test
 
     steps:
-      - name: 🚀 Notify Discord (Build Started)
+      - name: 🚀 Notify Discord (Deploy Started)
         run: |
           curl -H "Content-Type: application/json" \
           -X POST \
           -d '{
             "username": "🚀 Deploy Gerard Way",
             "embeds": [{
-              "title": "🛠 Build in Progress",
-              "description": "🔄 `bsb-api` is being updated. Grab a coffee ☕ while I work! 🚀",
+              "title": "🛠 Deployment in Progress",
+              "description": "🔄 `truppe-api` is being updated. Grab a coffee ☕ while I work! 🚀",
               "color": 16776960,
               "fields": [
                 { "name": "Release", "value": "${{ github.event.release.tag_name || github.ref_name }}", "inline": true },
@@ -46,19 +29,6 @@ jobs:
           }' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
 
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.release.tag_name }}
-
-      - name: 📦 Install Production Dependencies
-        run: npm install --omit=dev
-        env:
-          SKIP_HUSKY: true
-
-      - name: 📦 Archive release contents
-        run: zip -r release.zip . -x ".git/*"
-
       - name: 🔐 Setup SSH Key
         run: |
           echo "${{ secrets.SERVER_SSH_KEY }}" > id_ed25519
@@ -66,19 +36,16 @@ jobs:
           eval $(ssh-agent -s)
           ssh-add id_ed25519
 
-      - name: 🚀 Deploy to Server via SSH
+      - name: 🚀 Deploy via SSH
         run: |
-          scp -i id_ed25519 -o StrictHostKeyChecking=no release.zip root@${{ secrets.SERVER_HOST }}:/root/bsb-api-release.zip
+          ssh -i id_ed25519 -o StrictHostKeyChecking=no root@${{ secrets.SERVER_HOST }} << 'EOF'
+          cd ~/dev/truppe-api
+          git checkout ${{ github.event.release.tag_name }}
+          git pull origin ${{ github.event.release.tag_name }}
 
-          ssh -i id_ed25519 -o StrictHostKeyChecking=no root@${{ secrets.SERVER_HOST }} <<EOF
-          rm -rf ~/bsb-api
-          mkdir ~/bsb-api
-          apt-get update && apt-get install -y unzip
-          unzip -o /root/bsb-api-release.zip -d ~/bsb-api
-          rm /root/bsb-api-release.zip
-
-          make rebuild-api
-          make up-api
+          cd ~/docker
+          docker compose -f ~/docker/docker-compose.truppe-api.yml build truppe_api
+          docker compose -f ~/docker/docker-compose.truppe-api.yml up -d truppe_api
 
           docker image prune -f
           EOF
@@ -92,7 +59,7 @@ jobs:
             "username": "🚀 Deploy Gerard Way",
             "embeds": [{
               "title": "✅ Deployment Complete",
-              "description": "✨ `bsb-api` is now live and ready to rock! 🎸🔥",
+              "description": "✨ `truppe-api` is now live and ready to rock! 🎸🔥",
               "color": 65280,
               "fields": [
                 { "name": "Release", "value": "${{ github.event.release.tag_name || github.ref_name }}", "inline": true },
@@ -111,7 +78,7 @@ jobs:
             "username": "🚨 Deploy Gerard Way",
             "embeds": [{
               "title": "❌ Uh-oh! Deployment Failed!",
-              "description": "🚨 Something went wrong updating `bsb-api`. Check GitHub Actions logs for details.",
+              "description": "🚨 Something went wrong updating `truppe-api`. Check GitHub Actions logs for details.",
               "color": 16711680,
               "fields": [
                 { "name": "Release", "value": "${{ github.event.release.tag_name || github.ref_name }}", "inline": true },

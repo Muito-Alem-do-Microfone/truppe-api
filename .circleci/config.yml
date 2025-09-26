@@ -1,0 +1,53 @@
+version: 2.1
+
+executors:
+  node-executor:
+    docker:
+      - image: cimg/node:20.11
+    working_directory: ~/repo
+
+jobs:
+  run-tests:
+    executor: node-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-deps-{{ checksum "package-lock.json" }}
+            - v1-deps-
+      - run:
+          name: Install dependencies
+          command: npm ci
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-deps-{{ checksum "package-lock.json" }}
+      - run:
+          name: Run tests
+          command: npm test
+
+  test-build:
+    executor: node-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-deps-{{ checksum "package-lock.json" }}
+            - v1-deps-
+      - run:
+          name: Install dependencies
+          command: npm ci
+      - setup_remote_docker:
+          version: 20.10.24
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t truppe_api:latest -f Dockerfile .
+
+workflows:
+  test-and-build:
+    jobs:
+      - run-tests
+      - test-build:
+          requires:
+            - run-tests

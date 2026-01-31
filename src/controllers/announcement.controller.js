@@ -3,9 +3,10 @@ import { uploadToS3 } from "../services/s3/imageUpload.js";
 
 const prisma = new PrismaClient();
 
-const webhookURL = process.env.DISCORD_SERVER_WEBOOK;
+const webhookURL = process.env.DISCORD_SERVER_WEBHOOK;
 
 const createAnnouncement = async (req, res) => {
+  console.log(req.body);
   const {
     title,
     name,
@@ -78,7 +79,11 @@ const createAnnouncement = async (req, res) => {
       });
     }
 
+    console.log("Uploading image to S3...");
+
     const imageUrl = req.file ? await uploadToS3(req.file) : null;
+
+    console.log("Image uploaded:", imageUrl);
 
     const announcement = await prisma.announcement.create({
       data: {
@@ -124,67 +129,6 @@ const createAnnouncement = async (req, res) => {
         },
       },
     });
-
-    const discordPayload = {
-      username: "Muito Além do Microfone -- Busque sua banda 🎵",
-      embeds: [
-        {
-          title: `Novo Anúncio: ${title}`,
-          description: `${city}, ${state}\n\n${description}`,
-          color: 0x2ecc71,
-          timestamp: new Date().toISOString(),
-          fields: [
-            { name: "Nome", value: name, inline: true },
-            { name: "Tipo", value: type, inline: true },
-
-            {
-              name: "Gêneros",
-              value:
-                announcement.genres.map((g) => g.name).join(", ") ||
-                "Não informado",
-              inline: true,
-            },
-            {
-              name: "Instrumentos",
-              value:
-                announcement.instruments.map((i) => i.name).join(", ") ||
-                "Não informado",
-              inline: true,
-            },
-
-            {
-              name: "Contato",
-              value: `${number} | ${email}`,
-              inline: false,
-            },
-
-            {
-              name: "Redes Sociais",
-              value:
-                announcement.socialLinks
-                  .map((link) => `[${link.socialMedia.name}](${link.url})`)
-                  .join(" • ") || "Nenhuma informada",
-              inline: false,
-            },
-          ],
-          footer: {
-            text: "Busque sua banda por MADM",
-          },
-        },
-      ],
-    };
-
-    const response = await fetch(webhookURL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(discordPayload),
-    });
-
-    if (!response.ok) {
-      console.error("Failed to send Discord message:", await response.text());
-    } else {
-      console.log("✅ Announcement saved & message sent to Discord!");
-    }
 
     return res.status(201).json({
       status: "success",

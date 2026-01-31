@@ -76,8 +76,8 @@ model AppUser {
   name              String?
   surname           String?
   dateOfBirth       DateTime?
-  country           String?
   state             String?
+  city              String?
   isEmailConfirmed  Boolean                @default(false)
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt

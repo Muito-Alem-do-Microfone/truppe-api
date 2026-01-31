@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 const webhookURL = process.env.DISCORD_SERVER_WEBHOOK;
 
 const createAnnouncement = async (req, res) => {
-  console.log(req.body);
   const {
     title,
     name,

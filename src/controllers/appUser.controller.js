@@ -1,26 +1,22 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
-import crypto from "crypto";
 import { sendGenericEmail } from "../services/email/sendGenericEmail.js";
 
 const prisma = new PrismaClient();
 
-// Generate a random 6-digit confirmation code
 const generateConfirmationCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Register a new user
 const registerUser = async (req, res) => {
   try {
-    const { email, password, name, surname, dateOfBirth, country, state } =
+    const { email, password, name, surname, dateOfBirth, state, city } =
       req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    // Validate date of birth if provided
     let parsedDateOfBirth = null;
     if (dateOfBirth) {
       parsedDateOfBirth = new Date(dateOfBirth);
@@ -29,7 +25,6 @@ const registerUser = async (req, res) => {
       }
     }
 
-    // Check if user already exists
     const existingUser = await prisma.appUser.findUnique({
       where: { email },
     });
@@ -40,11 +35,9 @@ const registerUser = async (req, res) => {
         .json({ error: "User with this email already exists" });
     }
 
-    // Hash password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create user
     const user = await prisma.appUser.create({
       data: {
         email,
@@ -52,17 +45,15 @@ const registerUser = async (req, res) => {
         name: name || null,
         surname: surname || null,
         dateOfBirth: parsedDateOfBirth,
-        country: country || null,
         state: state || null,
+        city: city || null,
         isEmailConfirmed: false,
       },
     });
 
-    // Generate confirmation code
     const confirmationCode = generateConfirmationCode();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Create confirmation record
     await prisma.appUserConfirmation.create({
       data: {
         userId: user.id,
@@ -72,7 +63,6 @@ const registerUser = async (req, res) => {
       },
     });
 
-    // Send confirmation email
     try {
       await sendGenericEmail({
         to: email,
@@ -87,10 +77,8 @@ const registerUser = async (req, res) => {
       });
     } catch (emailError) {
       console.error("Failed to send confirmation email:", emailError);
-      // Don't fail the registration if email fails
     }
 
-    // Return user without password
     const { password: _, ...userWithoutPassword } = user;
     res.status(201).json({
       message:
@@ -103,7 +91,6 @@ const registerUser = async (req, res) => {
   }
 };
 
-// Confirm email with code
 const confirmEmail = async (req, res) => {
   try {
     const { email, code } = req.body;
@@ -172,7 +159,6 @@ const confirmEmail = async (req, res) => {
   }
 };
 
-// Resend confirmation code
 const resendConfirmationCode = async (req, res) => {
   try {
     const { email } = req.body;
@@ -234,7 +220,6 @@ const resendConfirmationCode = async (req, res) => {
   }
 };
 
-// Login user
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;

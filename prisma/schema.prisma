@@ -9,16 +9,11 @@ datasource db {
 
 model Announcement {
   id          Int          @id @default(autoincrement())
-  title       String
-  name        String
-  age         Int
-  about       String
-  number      String
-  email       String
+  name        String?
+  description String
   type        String
   state       String
   city        String
-  description String
   userId      Int
   user        AppUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime     @default(now())

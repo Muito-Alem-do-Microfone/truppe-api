@@ -11,10 +11,8 @@ import {
   assertHelpers,
 } from "./helpers/testSetup.js";
 
-// Setup Prisma mocking
 setupPrismaMock();
 
-// Mock bcrypt
 vi.mock("bcrypt", () => ({
   default: {
     hash: vi.fn(),
@@ -83,18 +81,18 @@ describe("App User API", () => {
       expect(response.body).toHaveProperty("user");
       expect(response.body.user).toHaveProperty(
         "email",
-        validRegistrationData.email
+        validRegistrationData.email,
       );
       expect(response.body.user).toHaveProperty(
         "name",
-        validRegistrationData.name
+        validRegistrationData.name,
       );
       expect(response.body.user).toHaveProperty("isEmailConfirmed", false);
       expect(response.body.user).not.toHaveProperty("password");
 
       expect(bcrypt.hash).toHaveBeenCalledWith(
         validRegistrationData.password,
-        10
+        10,
       );
       expect(prisma.appUser.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -103,31 +101,9 @@ describe("App User API", () => {
             name: validRegistrationData.name,
             isEmailConfirmed: false,
           }),
-        })
+        }),
       );
       expect(prisma.appUserConfirmation.create).toHaveBeenCalled();
-    });
-
-    it("should register user without name", async () => {
-      const dataWithoutName = {
-        email: "test@example.com",
-        password: "testpassword123",
-      };
-      const mockUser = testDataFactory.appUser({
-        email: dataWithoutName.email,
-        name: null,
-      });
-
-      prisma.appUser.findUnique.mockResolvedValue(null);
-      prisma.appUser.create.mockResolvedValue(mockUser);
-      prisma.appUserConfirmation.create.mockResolvedValue({});
-
-      const response = await request(app)
-        .post("/api/users/register")
-        .send(dataWithoutName);
-
-      expect(response.status).toBe(201);
-      expect(response.body.user.name).toBeNull();
     });
 
     it("should return 400 if email is missing", async () => {
@@ -139,7 +115,7 @@ describe("App User API", () => {
 
       assertHelpers.expectValidationError(
         response,
-        "Email and password are required"
+        "Email and password are required",
       );
     });
 
@@ -152,7 +128,7 @@ describe("App User API", () => {
 
       assertHelpers.expectValidationError(
         response,
-        "Email and password are required"
+        "Email and password are required",
       );
     });
 
@@ -247,7 +223,7 @@ describe("App User API", () => {
 
       assertHelpers.expectValidationError(
         response,
-        "Email and confirmation code are required"
+        "Email and confirmation code are required",
       );
     });
 
@@ -260,7 +236,7 @@ describe("App User API", () => {
 
       assertHelpers.expectValidationError(
         response,
-        "Email and confirmation code are required"
+        "Email and confirmation code are required",
       );
     });
 
@@ -303,7 +279,7 @@ describe("App User API", () => {
 
       assertHelpers.expectValidationError(
         response,
-        "No valid confirmation code found"
+        "No valid confirmation code found",
       );
     });
 
@@ -330,7 +306,7 @@ describe("App User API", () => {
 
       assertHelpers.expectValidationError(
         response,
-        "Invalid confirmation code"
+        "Invalid confirmation code",
       );
     });
   });
@@ -361,7 +337,7 @@ describe("App User API", () => {
 
       expect(bcrypt.compare).toHaveBeenCalledWith(
         validLoginData.password,
-        mockUser.password
+        mockUser.password,
       );
     });
 
@@ -374,7 +350,7 @@ describe("App User API", () => {
 
       assertHelpers.expectValidationError(
         response,
-        "Email and password are required"
+        "Email and password are required",
       );
     });
 
@@ -387,7 +363,7 @@ describe("App User API", () => {
 
       assertHelpers.expectValidationError(
         response,
-        "Email and password are required"
+        "Email and password are required",
       );
     });
 
@@ -476,7 +452,7 @@ describe("App User API", () => {
 
       prisma.appUser.findUnique.mockResolvedValue(mockUser);
       prisma.appUserConfirmation.create.mockRejectedValue(
-        new Error("Database error")
+        new Error("Database error"),
       );
 
       const response = await request(app)

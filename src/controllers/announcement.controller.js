@@ -6,21 +6,7 @@ const prisma = new PrismaClient();
 const webhookURL = process.env.DISCORD_SERVER_WEBHOOK;
 
 const createAnnouncement = async (req, res) => {
-  const {
-    title,
-    name,
-    number,
-    email,
-    age,
-    about,
-    type,
-    state,
-    city,
-    description,
-    userId,
-  } = req.body;
-
-  const parsedAge = parseInt(age, 10);
+  const { name, type, state, city, description, userId } = req.body;
 
   const toArray = (val) => {
     if (!val) return [];
@@ -41,28 +27,23 @@ const createAnnouncement = async (req, res) => {
   const instrumentIds = toArray(req.body.instrumentIds);
   const tagIds = toArray(req.body.tagIds);
 
-  if (
-    !title ||
-    !name ||
-    !number ||
-    !email ||
-    Number.isNaN(parsedAge) ||
-    parsedAge <= 0 ||
-    !about ||
-    !type ||
-    !state ||
-    !city ||
-    !description ||
-    !userId ||
-    !genreIds ||
-    genreIds.length === 0 ||
-    !instrumentIds ||
-    instrumentIds.length === 0 ||
-    !tagIds ||
-    tagIds.length === 0
-  ) {
-    return res.status(400).send({
-      message: "One or more required fields are missing or invalid",
+  const requiredFields = { name, type, state, city, description, userId };
+  const requiredArrays = { genreIds, instrumentIds, tagIds };
+
+  const missingFields = Object.entries(requiredFields)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  const emptyArrays = Object.entries(requiredArrays)
+    .filter(([_, value]) => !value || value.length === 0)
+    .map(([key]) => key);
+
+  const errors = [...missingFields, ...emptyArrays];
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      message: "Missing required fields",
+      fields: errors,
     });
   }
 
@@ -86,16 +67,11 @@ const createAnnouncement = async (req, res) => {
 
     const announcement = await prisma.announcement.create({
       data: {
-        title,
         name,
-        number,
-        email,
         type,
         state,
         city,
         description,
-        age: parsedAge,
-        about,
         imageUrl,
         userId: parseInt(userId),
         genres: {
@@ -168,13 +144,9 @@ const deleteAnnouncement = async (req, res) => {
 
 const updateAnnouncement = async (req, res) => {
   const id = parseInt(req.params.id);
+
   const {
-    title,
     name,
-    number,
-    email,
-    age,
-    about,
     type,
     genreIds,
     tagIds,
@@ -185,24 +157,23 @@ const updateAnnouncement = async (req, res) => {
     socialLinks,
   } = req.body;
 
-  if (
-    !title ||
-    !name ||
-    !number ||
-    !email ||
-    !age ||
-    !about ||
-    !type ||
-    !genreIds ||
-    !state ||
-    !city ||
-    !description ||
-    !instrumentIds ||
-    !tagIds
-  ) {
-    return res.status(400).send({
-      message:
-        "One or more required fields are missing: Title, Name, Number, Email, Type, GenreIds, State, City, Description, InstrumentIds",
+  const requiredFields = { name, type, state, city, description };
+  const requiredArrays = { genreIds, instrumentIds, tagIds };
+
+  const missingFields = Object.entries(requiredFields)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  const emptyArrays = Object.entries(requiredArrays)
+    .filter(([_, value]) => !value || value.length === 0)
+    .map(([key]) => key);
+
+  const errors = [...missingFields, ...emptyArrays];
+
+  if (errors.length > 0) {
+    return res.status(400).json({
+      message: "Missing required fields",
+      fields: errors,
     });
   }
 
@@ -218,13 +189,8 @@ const updateAnnouncement = async (req, res) => {
     const updatedAnnouncement = await prisma.announcement.update({
       where: { id },
       data: {
-        title,
         name,
-        number,
-        email,
         type,
-        age,
-        about,
         state,
         city,
         description,
@@ -274,11 +240,6 @@ const getAnnouncements = async (req, res) => {
         instruments: true,
         tags: true,
       },
-    });
-    announcementsList.forEach((announcement) => {
-      delete announcement.about;
-      delete announcement.email;
-      delete announcement.number;
     });
     res.send(announcementsList);
   } catch (err) {
